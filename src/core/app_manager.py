@@ -535,23 +535,65 @@ class QRScannerApp(LoggerMixin):
             
             # Update the sheets manager configuration
             self.sheets_manager.update_master_list_config(spreadsheet_id, sheet_name)
-            
+
             # Update the configuration manager
             self.config_manager.update_google_sheets_config(
                 master_list_spreadsheet_id=spreadsheet_id,
                 master_list_sheet_name=sheet_name
             )
-            
+
             # Update the sheets service configuration if it exists
             if self.sheets_service:
                 self.sheets_service.config.master_list_spreadsheet_id = spreadsheet_id
                 self.sheets_service.config.master_list_sheet_name = sheet_name
-            
+
             self.log_info(f"Updated Master List config: {spreadsheet_id}/{sheet_name}")
             return True
             
         except Exception as e:
             self.log_error(f"Error updating Master List config: {str(e)}")
+            return False
+    
+    def update_sheets_config(self, spreadsheet_id: str = None, sheet_name: str = None) -> bool:
+        """
+        Update the main Google Sheets configuration.
+
+        Args:
+            spreadsheet_id: Main spreadsheet ID (optional)
+            sheet_name: Main sheet name (optional)
+
+        Returns:
+            True if successful, False otherwise
+        """
+        try:
+            if not self.sheets_manager:
+                self.log_error("Sheets manager not initialized")
+                return False
+
+            # Update the configuration manager
+            config_updates = {}
+            if spreadsheet_id is not None:
+                config_updates['spreadsheet_id'] = spreadsheet_id
+            if sheet_name is not None:
+                config_updates['sheet_name'] = sheet_name
+
+            if config_updates:
+                self.config_manager.update_google_sheets_config(**config_updates)
+
+                # Update the sheets service configuration if it exists
+                if self.sheets_service:
+                    if spreadsheet_id is not None:
+                        self.sheets_service.config.spreadsheet_id = spreadsheet_id
+                    if sheet_name is not None:
+                        self.sheets_service.config.sheet_name = sheet_name
+
+                self.log_info(f"Updated Sheets config: {config_updates}")
+                return True
+
+            return False
+
+        except Exception as e:
+            self.log_error(f"Error updating Sheets config: {str(e)}")
             return False
     
     def add_scan_data(self, data: str, barcode_type: str) -> bool:

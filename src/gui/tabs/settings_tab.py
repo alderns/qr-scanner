@@ -65,8 +65,8 @@ class SettingsTab:
         
         # Main content frame with same padding as scanner tab
         main_frame = tk.Frame(scrollable_frame, bg=THEME_COLORS['background'])
-        main_frame.pack(fill=tk.BOTH, expand=True, padx=COMPONENT_SPACING['card_padding'], 
-                       pady=COMPONENT_SPACING['card_padding'])
+        main_frame.pack(fill=tk.BOTH, expand=True, padx=COMPONENT_SPACING['card_padding_xxl'], 
+                       pady=COMPONENT_SPACING['card_padding_xxl'])
         
         # Google Sheets section
         self._create_google_sheets_section(main_frame)
@@ -123,10 +123,14 @@ class SettingsTab:
         divider.pack(fill=tk.X, pady=(0, COMPONENT_SPACING['card_padding']))
         
         # Spreadsheet configuration
-        self._create_field_group(conn_frame, "Spreadsheet ID", DEFAULT_SPREADSHEET_ID, 
+        current_config = self.app_manager.config_manager.get_google_sheets_config()
+        current_spreadsheet_id = current_config.spreadsheet_id if current_config else DEFAULT_SPREADSHEET_ID
+        current_sheet_name = current_config.sheet_name if current_config else DEFAULT_SHEET_NAME
+        
+        self._create_field_group(conn_frame, "Spreadsheet ID", current_spreadsheet_id, 
                                 self._toggle_spreadsheet_edit, "spreadsheet")
         
-        self._create_field_group(conn_frame, "Sheet Name", DEFAULT_SHEET_NAME, 
+        self._create_field_group(conn_frame, "Sheet Name", current_sheet_name, 
                                 self._toggle_sheet_name_edit, "sheet_name")
         
         # Connect button
@@ -175,13 +179,18 @@ class SettingsTab:
         config_frame.pack(fill=tk.X, padx=COMPONENT_SPACING['card_padding'], 
                          pady=(0, COMPONENT_SPACING['card_padding']))
         
+        # Get current configuration for Master List fields
+        current_config = self.app_manager.config_manager.get_google_sheets_config()
+        current_master_spreadsheet_id = current_config.master_list_spreadsheet_id if current_config else DEFAULT_MASTER_LIST_SPREADSHEET_ID
+        current_master_sheet_name = current_config.master_list_sheet_name if current_config else DEFAULT_MASTER_LIST_SHEET_NAME
+        
         # Master List fields
         self._create_field_group(config_frame, "Master List Spreadsheet ID", 
-                                DEFAULT_MASTER_LIST_SPREADSHEET_ID, 
+                                current_master_spreadsheet_id, 
                                 self._toggle_master_spreadsheet_edit, "master_spreadsheet")
         
         self._create_field_group(config_frame, "Master List Sheet Name", 
-                                DEFAULT_MASTER_LIST_SHEET_NAME, 
+                                current_master_sheet_name, 
                                 self._toggle_master_sheet_name_edit, "master_sheet_name")
         
         # Controls section
@@ -540,11 +549,22 @@ class SettingsTab:
             entry.insert(0, current_value)
             btn.configure(text="Save")
         else:
-            # Store current value before making readonly
-            current_value = entry.get()
+            # Save the new value to configuration
+            new_value = entry.get().strip()
+            if new_value:
+                # Update the configuration
+                success = self.app_manager.update_sheets_config(spreadsheet_id=new_value)
+                if success:
+                    if self.callbacks.get('update_status'):
+                        self.callbacks['update_status'](f"Spreadsheet ID updated: {new_value}")
+                else:
+                    if self.callbacks.get('update_status'):
+                        self.callbacks['update_status']("Failed to update spreadsheet ID")
+            
+            # Make readonly and update display
             entry.configure(state='readonly')
             entry.delete(0, tk.END)
-            entry.insert(0, current_value)
+            entry.insert(0, new_value)
             # Clear any text selection to remove highlighting
             entry.selection_clear()
             btn.configure(text="Edit")
@@ -562,11 +582,22 @@ class SettingsTab:
             entry.insert(0, current_value)
             btn.configure(text="Save")
         else:
-            # Store current value before making readonly
-            current_value = entry.get()
+            # Save the new value to configuration
+            new_value = entry.get().strip()
+            if new_value:
+                # Update the configuration
+                success = self.app_manager.update_sheets_config(sheet_name=new_value)
+                if success:
+                    if self.callbacks.get('update_status'):
+                        self.callbacks['update_status'](f"Sheet name updated: {new_value}")
+                else:
+                    if self.callbacks.get('update_status'):
+                        self.callbacks['update_status']("Failed to update sheet name")
+            
+            # Make readonly and update display
             entry.configure(state='readonly')
             entry.delete(0, tk.END)
-            entry.insert(0, current_value)
+            entry.insert(0, new_value)
             # Clear any text selection to remove highlighting
             entry.selection_clear()
             btn.configure(text="Edit")
@@ -584,11 +615,22 @@ class SettingsTab:
             entry.insert(0, current_value)
             btn.configure(text="Save")
         else:
-            # Store current value before making readonly
-            current_value = entry.get()
+            # Save the new value to configuration
+            new_value = entry.get().strip()
+            if new_value:
+                # Update the configuration
+                success = self.app_manager.update_master_list_config(spreadsheet_id=new_value, sheet_name=self.master_sheet_name_entry.get().strip())
+                if success:
+                    if self.callbacks.get('update_status'):
+                        self.callbacks['update_status'](f"Master List Spreadsheet ID updated: {new_value}")
+                else:
+                    if self.callbacks.get('update_status'):
+                        self.callbacks['update_status']("Failed to update Master List Spreadsheet ID")
+            
+            # Make readonly and update display
             entry.configure(state='readonly')
             entry.delete(0, tk.END)
-            entry.insert(0, current_value)
+            entry.insert(0, new_value)
             # Clear any text selection to remove highlighting
             entry.selection_clear()
             btn.configure(text="Edit")
@@ -606,11 +648,22 @@ class SettingsTab:
             entry.insert(0, current_value)
             btn.configure(text="Save")
         else:
-            # Store current value before making readonly
-            current_value = entry.get()
+            # Save the new value to configuration
+            new_value = entry.get().strip()
+            if new_value:
+                # Update the configuration
+                success = self.app_manager.update_master_list_config(spreadsheet_id=self.master_spreadsheet_entry.get().strip(), sheet_name=new_value)
+                if success:
+                    if self.callbacks.get('update_status'):
+                        self.callbacks['update_status'](f"Master List Sheet Name updated: {new_value}")
+                else:
+                    if self.callbacks.get('update_status'):
+                        self.callbacks['update_status']("Failed to update Master List Sheet Name")
+            
+            # Make readonly and update display
             entry.configure(state='readonly')
             entry.delete(0, tk.END)
-            entry.insert(0, current_value)
+            entry.insert(0, new_value)
             # Clear any text selection to remove highlighting
             entry.selection_clear()
             btn.configure(text="Edit") 

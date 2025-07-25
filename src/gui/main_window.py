@@ -16,6 +16,7 @@ from .tabs.scanner_tab import ScannerTab
 from .tabs.settings_tab import SettingsTab
 from .tabs.history_tab import HistoryTab
 from .tabs.logs_tab import LogsTab
+from src.config.paths import ICONS_DIR
 
 WINDOW_TITLE = "QR Scanner"
 WINDOW_SIZE = "800x800"
@@ -64,6 +65,11 @@ class MainWindow:
         self.root.title(WINDOW_TITLE)
         self.root.geometry(WINDOW_SIZE)
         self.root.configure(bg=THEME_COLORS['background'])
+        
+        # Set favicon
+        favicon_path = ICONS_DIR / "favicon.ico"
+        if favicon_path.exists():
+            self.root.iconbitmap(str(favicon_path))
         
         # Center the window on screen
         self.root.update_idletasks()
@@ -137,6 +143,11 @@ class MainWindow:
         history_frame = tk.Frame(self.notebook, bg=THEME_COLORS['background'])
         self.notebook.add(history_frame, text="History")
         self._create_history_tab(history_frame)
+
+        # Logs tab
+        logs_frame = tk.Frame(self.notebook, bg=THEME_COLORS['background'])
+        self.notebook.add(logs_frame, text="Logs")
+        self._create_logs_tab(logs_frame)
     
     def _create_scanner_tab(self, parent):
         """Create a streamlined scanner tab with essential controls."""
@@ -192,6 +203,14 @@ class MainWindow:
             'update_scan_count': self._update_scan_count
         }
         self.history_tab = HistoryTab(parent, self.app_manager, callbacks)
+    
+    def _create_logs_tab(self, parent):
+        """Create a simplified logs tab."""
+        callbacks = {
+            'update_status': self.update_status,
+            'update_scan_count': self._update_scan_count
+        }
+        self.logs_tab = LogsTab(parent, self.app_manager, callbacks)
     
     def _create_status_bar(self, parent):
         """Create a minimal status bar."""

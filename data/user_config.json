@@ -3,8 +3,8 @@
   "app_version": "2.0.0",
   "app_description": "Modern QR Code Scanner with Google Sheets Integration",
   "google_sheets": {
-    "spreadsheet_id": "1PjW2-qgjWs5123qkzVyOBc-OKs2Ygk1143zkl_CymwQ",
-    "sheet_name": "Scanner",
+    "spreadsheet_id": "1kS2neHeebqvfSNAU0vjRz-8DPldVNYnpmZqwlJObWbI",
+    "sheet_name": "Attendance Log",
     "master_list_sheet": "MasterList",
     "master_list_spreadsheet_id": "1PjW2-qgjWs5123qkzVyOBc-OKs2Ygk1143zkl_CymwQ",
     "master_list_sheet_name": "MasterList",
@@ -55,7 +55,7 @@
   "dark_mode": false,
   "_metadata": {
     "version": "2.0.0",
-    "last_modified": "2025-07-25T18:08:05.680406",
+    "last_modified": "2025-07-25T19:03:43.156115",
     "exported_by": "QR Scanner Config Manager"
   }
 }

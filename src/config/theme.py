@@ -64,7 +64,7 @@ SPACING = {
     # Extra large spacing for major sections
     'xl': 16,
     # Double extra large for page-level spacing
-    'xxl': 24,
+    'xxl': 20,
     # Triple extra large for major page sections
     'xxxl': 32
 }
@@ -74,6 +74,7 @@ SPACING = {
 # Component-specific spacing
 COMPONENT_SPACING = {
     # Card spacing
+    'card_padding_xxl': SPACING['xxl'],
     'card_padding': SPACING['xl'],
     'card_margin': SPACING['lg'],
     'card_inner_padding': SPACING['md'],
