@@ -59,24 +59,49 @@ class SettingsTab:
         # Spreadsheet ID
         tk.Label(conn_frame, text="Spreadsheet ID:", font=NORMAL_FONT,
                 fg=THEME_COLORS['text'], bg=THEME_COLORS['surface']).pack(anchor=tk.W)
-        self.spreadsheet_entry = tk.Entry(conn_frame, font=NORMAL_FONT, 
+        
+        # Spreadsheet ID frame with edit button
+        spreadsheet_frame = tk.Frame(conn_frame, bg=THEME_COLORS['surface'])
+        spreadsheet_frame.pack(fill=tk.X, pady=(5, 10))
+        
+        self.spreadsheet_entry = tk.Entry(spreadsheet_frame, font=NORMAL_FONT, 
                                          bg=THEME_COLORS['surface'], fg=THEME_COLORS['text'],
                                          relief='solid', borderwidth=1,
                                          highlightbackground=THEME_COLORS['border'],
                                          highlightcolor=THEME_COLORS['border'])
         self.spreadsheet_entry.insert(0, DEFAULT_SPREADSHEET_ID)
-        self.spreadsheet_entry.pack(fill=tk.X, pady=(5, 10))
+        self.spreadsheet_entry.configure(state='readonly')
+        # Prevent text selection in readonly mode
+        self.spreadsheet_entry.bind('<Button-1>', lambda e: 'break' if self.spreadsheet_entry.cget('state') == 'readonly' else None)
+        self.spreadsheet_entry.bind('<B1-Motion>', lambda e: 'break' if self.spreadsheet_entry.cget('state') == 'readonly' else None)
+        self.spreadsheet_entry.pack(side=tk.LEFT, fill=tk.X, expand=True)
+        
+        self.edit_spreadsheet_btn = ModernButton(spreadsheet_frame, text="Edit", 
+                                                style='secondary',
+                                                command=self._toggle_spreadsheet_edit)
+        self.edit_spreadsheet_btn.pack(side=tk.RIGHT, padx=(5, 0))
         
         # Sheet name
         tk.Label(conn_frame, text="Sheet Name:", font=NORMAL_FONT,
                 fg=THEME_COLORS['text'], bg=THEME_COLORS['surface']).pack(anchor=tk.W)
-        self.sheet_name_entry = tk.Entry(conn_frame, font=NORMAL_FONT,
+        
+        # Sheet name frame with edit button
+        sheet_name_frame = tk.Frame(conn_frame, bg=THEME_COLORS['surface'])
+        sheet_name_frame.pack(fill=tk.X, pady=(5, 10))
+        
+        self.sheet_name_entry = tk.Entry(sheet_name_frame, font=NORMAL_FONT,
                                         bg=THEME_COLORS['surface'], fg=THEME_COLORS['text'],
                                         relief='solid', borderwidth=1,
                                         highlightbackground=THEME_COLORS['border'],
                                         highlightcolor=THEME_COLORS['border'])
         self.sheet_name_entry.insert(0, DEFAULT_SHEET_NAME)
-        self.sheet_name_entry.pack(fill=tk.X, pady=(5, 10))
+        self.sheet_name_entry.configure(state='readonly')
+        self.sheet_name_entry.pack(side=tk.LEFT, fill=tk.X, expand=True)
+        
+        self.edit_sheet_name_btn = ModernButton(sheet_name_frame, text="Edit", 
+                                               style='secondary',
+                                               command=self._toggle_sheet_name_edit)
+        self.edit_sheet_name_btn.pack(side=tk.RIGHT, padx=(5, 0))
         
         # Connect button
         self.connect_button = ModernButton(conn_frame, text="Connect", 
@@ -180,10 +205,22 @@ class SettingsTab:
                 # Auto-load master list after successful connection
                 self._auto_load_master_list_data()
             else:
-                self.sheets_status.set_status('error')
-                self.sheets_status.set_text("Missing spreadsheet settings")
+                # Use default values if fields are empty
+                default_spreadsheet_id = DEFAULT_SPREADSHEET_ID
+                default_sheet_name = DEFAULT_SHEET_NAME
+                
                 if self.callbacks.get('update_status'):
-                    self.callbacks['update_status']("Please configure spreadsheet ID and sheet name")
+                    self.callbacks['update_status']("Auto-connecting with default settings...")
+                
+                spreadsheet_title = self.app_manager.connect_to_sheets(default_spreadsheet_id, default_sheet_name)
+                self.sheets_status.set_status('success')
+                self.sheets_status.set_text(f"Connected to {spreadsheet_title}")
+                
+                if self.callbacks.get('update_status'):
+                    self.callbacks['update_status'](f"Auto-connected to: {spreadsheet_title}")
+                
+                # Auto-load master list after successful connection
+                self._auto_load_master_list_data()
         except Exception as e:
             self.sheets_status.set_status('error')
             self.sheets_status.set_text("Auto-connect failed")
@@ -357,4 +394,40 @@ class SettingsTab:
         if status == 'error':
             self.credentials_button.pack(pady=(0, 15))
         else:
-            self.credentials_button.pack_forget() 
+            self.credentials_button.pack_forget()
+    
+    def _toggle_spreadsheet_edit(self):
+        """Toggle spreadsheet ID field between readonly and editable."""
+        if self.spreadsheet_entry.cget('state') == 'readonly':
+            # Store current value before enabling edit
+            current_value = self.spreadsheet_entry.get()
+            self.spreadsheet_entry.configure(state='normal')
+            self.spreadsheet_entry.delete(0, tk.END)
+            self.spreadsheet_entry.insert(0, current_value)
+            self.edit_spreadsheet_btn.configure(text="Save")
+        else:
+            # Store current value before making readonly
+            current_value = self.spreadsheet_entry.get()
+            self.spreadsheet_entry.configure(state='readonly')
+            self.spreadsheet_entry.delete(0, tk.END)
+            self.spreadsheet_entry.insert(0, current_value)
+            # Clear any text selection to remove highlighting
+            self.spreadsheet_entry.selection_clear()
+            self.edit_spreadsheet_btn.configure(text="Edit")
+    
+    def _toggle_sheet_name_edit(self):
+        """Toggle sheet name field between readonly and editable."""
+        if self.sheet_name_entry.cget('state') == 'readonly':
+            # Store current value before enabling edit
+            current_value = self.sheet_name_entry.get()
+            self.sheet_name_entry.configure(state='normal')
+            self.sheet_name_entry.delete(0, tk.END)
+            self.sheet_name_entry.insert(0, current_value)
+            self.edit_sheet_name_btn.configure(text="Save")
+        else:
+            # Store current value before making readonly
+            current_value = self.sheet_name_entry.get()
+            self.sheet_name_entry.configure(state='readonly')
+            self.sheet_name_entry.delete(0, tk.END)
+            self.sheet_name_entry.insert(0, current_value)
+            self.edit_sheet_name_btn.configure(text="Edit") 

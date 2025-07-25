@@ -66,6 +66,14 @@ class MainWindow:
         self.root.geometry(WINDOW_SIZE)
         self.root.configure(bg=THEME_COLORS['background'])
         
+        # Center the window on screen
+        self.root.update_idletasks()
+        width = self.root.winfo_width()
+        height = self.root.winfo_height()
+        x = (self.root.winfo_screenwidth() // 2) - (width // 2)
+        y = (self.root.winfo_screenheight() // 2) - (height // 2)
+        self.root.geometry(f'{width}x{height}+{x}+{y}')
+        
         # Set minimum window size
         self.root.minsize(*self.min_window_size)
         
@@ -144,7 +152,7 @@ class MainWindow:
                                    bg=THEME_COLORS['surface'], relief='solid', borderwidth=1,
                                    highlightbackground=THEME_COLORS['border'],
                                    highlightcolor=THEME_COLORS['border'])
-        self.video_frame.pack(fill=tk.BOTH, expand=True, padx=20, pady=(0, 20))
+        self.video_frame.pack(fill=tk.BOTH, expand=True, padx=20, pady=(20, 20))
         
         # Essential controls only
         controls_frame = tk.Frame(main_frame, bg=THEME_COLORS['background'])
@@ -216,6 +224,14 @@ class MainWindow:
         """Set initial status."""
         self.camera_status.set_status('neutral')
         self.camera_status.set_text("Camera Ready")
+        
+        # Auto-start camera after a short delay
+        self.root.after(1000, self._auto_start_camera)
+    
+    def _auto_start_camera(self):
+        """Automatically start the camera on application startup."""
+        if not self.is_scanning:
+            self._start_camera()
     
     def handle_app_callback(self, callback_type, data=None):
         """Handle callbacks from the application manager."""
@@ -291,15 +307,27 @@ class MainWindow:
         else:
             self.update_status(f"ID '{data}' not found in master list")
         
+        # Add to Google Sheets
+        if self.app_manager.add_scan_data(data, barcode_type):
+            self.update_status(f"Added to sheets: {data}")
+        else:
+            self.update_status(f"Failed to add to sheets: {data}")
+        
         # Add to history
         if hasattr(self, 'history_tab'):
-            try:
-                first_name, last_name = extract_names_from_qr_data(data)
-                first_name = clean_name(first_name)
-                last_name = clean_name(last_name)
+            # Use volunteer info if available, otherwise extract from QR data
+            if volunteer_info:
+                first_name = volunteer_info['first_name']
+                last_name = volunteer_info['last_name']
                 display_name = f"{first_name} {last_name}"
-            except:
-                display_name = data
+            else:
+                try:
+                    first_name, last_name = extract_names_from_qr_data(data)
+                    first_name = clean_name(first_name)
+                    last_name = clean_name(last_name)
+                    display_name = f"{first_name} {last_name}"
+                except:
+                    display_name = data
             
             self.history_tab.add_to_history(
                 time.strftime('%H:%M:%S'),
