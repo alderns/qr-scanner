@@ -38,7 +38,7 @@ class MainWindow:
         self.setup_accessibility()
         
         # Set up closing handler
-        self.root.protocol("WM_DELETE_WINDOW", self.on_closing)
+        self.root.protocol("WM_DELETE_WINDOW", self._on_closing)
     
     def setup_styles(self):
         """Setup ttk styles for a clean, minimalist look."""
@@ -65,20 +65,18 @@ class MainWindow:
         self.root.title(WINDOW_TITLE)
         self.root.geometry(WINDOW_SIZE)
         self.root.configure(bg=THEME_COLORS['background'])
-        
+
         # Set favicon
         favicon_path = ICONS_DIR / "favicon.ico"
         if favicon_path.exists():
             self.root.iconbitmap(str(favicon_path))
-        
+
         # Center the window on screen
         self.root.update_idletasks()
-        width = self.root.winfo_width()
-        height = self.root.winfo_height()
-        x = (self.root.winfo_screenwidth() // 2) - (width // 2)
-        y = (self.root.winfo_screenheight() // 2) - (height // 2)
-        self.root.geometry(f'{width}x{height}+{x}+{y}')
-        
+        x = (self.root.winfo_screenwidth() // 2) - (self.root.winfo_width() // 2)
+        y = (self.root.winfo_screenheight() // 2) - (self.root.winfo_height() // 2)
+        self.root.geometry(f"+{x}+{y}")
+
         # Set minimum window size
         self.root.minsize(*self.min_window_size)
         
@@ -93,15 +91,15 @@ class MainWindow:
                                 pady=COMPONENT_SPACING['content_padding'])
         self.main_container.grid_rowconfigure(1, weight=1)
         self.main_container.grid_columnconfigure(0, weight=1)
-        
+
         # Create sections
         self._create_header_section(self.main_container)
         self._create_main_content(self.main_container)
         self._create_status_bar(self.main_container)
-        
+
         # Set initial status
         self._set_initial_status()
-    
+
     def setup_accessibility(self):
         """Setup basic accessibility features."""
         # Add keyboard shortcuts
@@ -362,13 +360,40 @@ class MainWindow:
             count = self.history_tab.get_history_count()
             # Could add a scan count display if needed
     
-    def on_closing(self):
-        """Handle application closing."""
-        if self.is_scanning:
-            self.app_manager.stop_camera()
-        self.app_manager.shutdown()
-        self.root.destroy() 
-
+    def _on_closing(self):
+        """Handle window closing event."""
+        try:
+            print("Application closing...")
+            
+            # Shutdown the application properly
+            if self.app_manager:
+                self.app_manager.shutdown()
+            
+            # Force destroy the window immediately
+            self._force_destroy()
+            
+        except Exception as e:
+            print(f"Error during shutdown: {e}")
+            self._force_destroy()
+    
+    def _force_destroy(self):
+        """Force destroy the window."""
+        try:
+            # Try normal quit first
+            self.root.quit()
+            self.root.destroy()
+        except Exception as e:
+            print(f"Error destroying window: {e}")
+            try:
+                # Try to destroy without quit
+                self.root.destroy()
+            except Exception as e2:
+                print(f"Error in force destroy: {e2}")
+                # Force exit if all else fails
+                import sys
+                import os
+                os._exit(0)
+    
     def _show_welcome_notification(self, first_name, last_name):
         """Show a welcome notification for found volunteers."""
         try:

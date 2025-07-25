@@ -63,7 +63,7 @@ class QRScannerApp(LoggerMixin):
         # Application state
         self.is_initialized = False
         self.is_running = False
-        self.auto_save_enabled = True
+        self.auto_save_enabled = False  # Disabled old auto-save mechanism
         
         # Callbacks
         self.gui_callback: Optional[Callable] = None
@@ -245,8 +245,9 @@ class QRScannerApp(LoggerMixin):
     
     def _setup_cleanup(self):
         """Setup cleanup procedures for application exit."""
-        if self.root:
-            self.root.protocol("WM_DELETE_WINDOW", self.shutdown)
+        # Note: Window closing is handled by MainWindow._on_closing
+        # This method is kept for potential future use
+        pass
     
     def _setup_state_transitions(self):
         """Setup application state transition rules."""
@@ -310,33 +311,62 @@ class QRScannerApp(LoggerMixin):
             self.log_error(f"Failed to start application: {str(e)}", exc_info=True)
             return False
     
+    def cleanup_history(self):
+        """Clean up and archive scan history."""
+        try:
+            if self.scan_processor:
+                # Archive current history before shutdown
+                if hasattr(self.scan_processor, 'file_manager'):
+                    self.scan_processor.file_manager.archive_current_history()
+                
+                # Save final history state
+                self.scan_processor.save_all_data()
+            
+            self.log_info("History cleanup completed")
+            
+        except Exception as e:
+            self.log_error(f"Error during history cleanup: {str(e)}")
+    
     def shutdown(self):
-        """Shutdown the application gracefully."""
+        """Shutdown the application."""
         try:
             self.log_info("Shutting down application...")
             
-            # Stop camera
-            if self.camera_manager:
-                self.camera_manager.stop_camera()
-            
-            # Save final data
-            if self.scan_processor:
-                self.scan_processor.save_all_data()
-            
-            # Close Google Sheets connection
-            if self.sheets_manager:
-                self.sheets_manager.close()
-            
+            # Set running flag to False to stop any ongoing operations
             self.is_running = False
             
-            # Destroy root window
-            if self.root:
-                self.root.destroy()
+            # Stop camera if running (non-blocking)
+            if self.camera_manager:
+                try:
+                    self.camera_manager.stop_camera()
+                    self.log_info("Camera stopped")
+                except Exception as e:
+                    self.log_error(f"Error stopping camera: {e}")
+            
+            # Quick cleanup - don't block on these operations
+            try:
+                # Clean up history
+                self.cleanup_history()
+                
+                # Save scan history
+                if self.scan_processor:
+                    self.scan_processor.save_all_data()
+                    self.log_info("Scan history saved")
+                
+                # Close Google Sheets connection
+                if self.sheets_manager:
+                    self.sheets_manager.close()
+                    self.log_info("Google Sheets connection closed")
+            except Exception as e:
+                self.log_error(f"Error during cleanup: {e}")
             
             self.log_info("Application shutdown complete")
             
         except Exception as e:
-            self.log_error(f"Error during shutdown: {str(e)}", exc_info=True)
+            self.log_error(f"Error during shutdown: {str(e)}")
+        finally:
+            # Ensure we always set running to False
+            self.is_running = False
     
     def _camera_callback(self, data: str, barcode_type: str, photo=None):
         """

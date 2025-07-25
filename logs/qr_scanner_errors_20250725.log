@@ -298,3 +298,23 @@ Traceback (most recent call last):
     current_log_level = current_config.logging.level if current_config and current_config.logging else "INFO"
                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 AttributeError: 'dict' object has no attribute 'level'
+2025-07-25 19:19:58,989 - src.utils.file_utils - ERROR - main:61 - Unexpected error: MainWindow._create_main_content() missing 1 required positional argument: 'parent'
+Traceback (most recent call last):
+  File "C:\Users\aldri\Downloads\qr\main.py", line 32, in main
+    main_window = MainWindow(root, app_manager)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\aldri\Downloads\qr\src\gui\main_window.py", line 37, in __init__
+    self.setup_gui()
+  File "C:\Users\aldri\Downloads\qr\src\gui\main_window.py", line 84, in setup_gui
+    self._create_main_content()
+TypeError: MainWindow._create_main_content() missing 1 required positional argument: 'parent'
+2025-07-25 19:20:26,157 - src.utils.file_utils - ERROR - main:61 - Unexpected error: MainWindow._create_main_content() missing 1 required positional argument: 'parent'
+Traceback (most recent call last):
+  File "C:\Users\aldri\Downloads\qr\main.py", line 32, in main
+    main_window = MainWindow(root, app_manager)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\aldri\Downloads\qr\src\gui\main_window.py", line 37, in __init__
+    self.setup_gui()
+  File "C:\Users\aldri\Downloads\qr\src\gui\main_window.py", line 84, in setup_gui
+    self._create_main_content()
+TypeError: MainWindow._create_main_content() missing 1 required positional argument: 'parent'

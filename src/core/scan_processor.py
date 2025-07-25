@@ -25,12 +25,14 @@ class ScanProcessor(LoggerMixin):
         self.on_scan_callback: Optional[Callable] = None
         self.on_error_callback: Optional[Callable] = None
         
+        # Initialize tracking variables
         self.last_save_time = time.time()
-        self.auto_save_enabled = True
+        self._last_save_count = 0
         
         # Initialize file manager
         self.file_manager = FileManager()
         
+        # Load existing history
         self._load_existing_history()
         
         self.log_info("Scan processor initialized")
@@ -150,13 +152,23 @@ class ScanProcessor(LoggerMixin):
     def auto_save(self):
         current_time = time.time()
         if current_time - self.last_save_time >= AUTO_SAVE_INTERVAL:
+            # Only save if there are actual changes
+            if hasattr(self, '_last_save_count') and self._last_save_count == len(self.scan_history):
+                return  # No changes, skip save
+            
             self.save_all_data()
             self.last_save_time = current_time
+            self._last_save_count = len(self.scan_history)
     
     def save_all_data(self) -> bool:
         try:
+            # Only save if there are actual changes
+            if hasattr(self, '_last_save_count') and self._last_save_count == len(self.scan_history):
+                return True  # No changes, skip save
+            
             history_data = list(self.scan_history)
             self.file_manager.save_scan_history(history_data)
+            self._last_save_count = len(self.scan_history)
             self.log_info(f"Saved {len(history_data)} scan records")
             return True
         except Exception as e:
