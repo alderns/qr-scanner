@@ -1,0 +1,9 @@
+[
+  {
+    "timestamp": "2025-07-25T09:40:52.450064",
+    "data": "CCFM-W-004",
+    "barcode_type": "QRCODE",
+    "source": "camera",
+    "processed": true
+  }
+]

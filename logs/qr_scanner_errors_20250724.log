@@ -1,0 +1,47 @@
+2025-07-24 22:40:46,260 - src.utils.file_utils - ERROR - log_error:175 - Failed to initialize application: CameraManager.__init__() got an unexpected keyword argument 'error_callback'
+Traceback (most recent call last):
+  File "C:\Users\aldri\Downloads\qr\src\core\app_manager.py", line 79, in initialize
+    self._initialize_components()
+  File "C:\Users\aldri\Downloads\qr\src\core\app_manager.py", line 144, in _initialize_components
+    self.camera_manager = CameraManager(
+                          ^^^^^^^^^^^^^^
+TypeError: CameraManager.__init__() got an unexpected keyword argument 'error_callback'
+2025-07-24 22:40:46,260 - src.utils.file_utils - ERROR - main:47 - Failed to initialize application
+2025-07-24 22:44:17,549 - src.utils.file_utils - ERROR - log_error:175 - Error during shutdown: 'GoogleSheetsManager' object has no attribute 'close'
+Traceback (most recent call last):
+  File "C:\Users\aldri\Downloads\qr\src\core\app_manager.py", line 207, in shutdown
+    self.sheets_manager.close()
+    ^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'GoogleSheetsManager' object has no attribute 'close'
+2025-07-24 22:44:18,846 - src.utils.file_utils - ERROR - log_error:175 - Error during shutdown: 'GoogleSheetsManager' object has no attribute 'close'
+Traceback (most recent call last):
+  File "C:\Users\aldri\Downloads\qr\src\core\app_manager.py", line 207, in shutdown
+    self.sheets_manager.close()
+    ^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'GoogleSheetsManager' object has no attribute 'close'
+2025-07-24 22:44:19,483 - src.utils.file_utils - ERROR - log_error:175 - Error during shutdown: 'GoogleSheetsManager' object has no attribute 'close'
+Traceback (most recent call last):
+  File "C:\Users\aldri\Downloads\qr\src\core\app_manager.py", line 207, in shutdown
+    self.sheets_manager.close()
+    ^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'GoogleSheetsManager' object has no attribute 'close'
+2025-07-24 22:44:20,003 - src.utils.file_utils - ERROR - log_error:175 - Error during shutdown: 'GoogleSheetsManager' object has no attribute 'close'
+Traceback (most recent call last):
+  File "C:\Users\aldri\Downloads\qr\src\core\app_manager.py", line 207, in shutdown
+    self.sheets_manager.close()
+    ^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'GoogleSheetsManager' object has no attribute 'close'
+2025-07-24 22:44:24,133 - src.utils.file_utils - ERROR - log_error:175 - Error during shutdown: 'GoogleSheetsManager' object has no attribute 'close'
+Traceback (most recent call last):
+  File "C:\Users\aldri\Downloads\qr\src\core\app_manager.py", line 207, in shutdown
+    self.sheets_manager.close()
+    ^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'GoogleSheetsManager' object has no attribute 'close'
+2025-07-24 22:44:24,523 - src.utils.file_utils - ERROR - log_error:175 - Error during shutdown: 'GoogleSheetsManager' object has no attribute 'close'
+Traceback (most recent call last):
+  File "C:\Users\aldri\Downloads\qr\src\core\app_manager.py", line 207, in shutdown
+    self.sheets_manager.close()
+    ^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'GoogleSheetsManager' object has no attribute 'close'
+2025-07-24 22:58:55,312 - src.utils.file_utils - ERROR - connect_to_spreadsheet:122 - Error connecting to spreadsheet: The read operation timed out
+2025-07-24 22:58:55,313 - src.utils.file_utils - ERROR - log_error:175 - Error connecting to spreadsheet: The read operation timed out

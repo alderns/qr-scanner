@@ -1,0 +1,44 @@
+[
+  {
+    "timestamp": "2025-07-24T23:16:14.941138",
+    "data": "CCFM-W-002",
+    "barcode_type": "QRCODE",
+    "source": "camera",
+    "processed": true
+  },
+  {
+    "timestamp": "2025-07-24T23:16:46.883406",
+    "data": "CCFM-W-003",
+    "barcode_type": "QRCODE",
+    "source": "camera",
+    "processed": true
+  },
+  {
+    "timestamp": "2025-07-24T23:17:12.273519",
+    "data": "CCFM-W-004",
+    "barcode_type": "QRCODE",
+    "source": "camera",
+    "processed": true
+  },
+  {
+    "timestamp": "2025-07-24T23:17:21.525514",
+    "data": "CCFM-W-005",
+    "barcode_type": "QRCODE",
+    "source": "camera",
+    "processed": true
+  },
+  {
+    "timestamp": "2025-07-24T23:17:36.428456",
+    "data": "CCFM-W-006",
+    "barcode_type": "QRCODE",
+    "source": "camera",
+    "processed": true
+  },
+  {
+    "timestamp": "2025-07-24T23:17:56.803743",
+    "data": "CCFM-W-007",
+    "barcode_type": "QRCODE",
+    "source": "camera",
+    "processed": true
+  }
+]
