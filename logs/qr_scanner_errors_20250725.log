@@ -318,3 +318,6 @@ Traceback (most recent call last):
   File "C:\Users\aldri\Downloads\qr\src\gui\main_window.py", line 84, in setup_gui
     self._create_main_content()
 TypeError: MainWindow._create_main_content() missing 1 required positional argument: 'parent'
+2025-07-25 20:59:17,313 - src.utils.file_utils - ERROR - log_error:105 - Error processing scan: 'ScanProcessor' object has no attribute 'auto_save_enabled'
+2025-07-25 20:59:30,503 - src.utils.file_utils - ERROR - log_error:105 - Error processing scan: 'ScanProcessor' object has no attribute 'auto_save_enabled'
+2025-07-25 21:04:20,015 - src.utils.file_utils - ERROR - log_error:105 - Error processing scan: 'ScanProcessor' object has no attribute 'auto_save_enabled'

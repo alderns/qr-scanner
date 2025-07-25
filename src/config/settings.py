@@ -20,7 +20,7 @@ DEFAULT_SHEET_NAME = "Scanner"
 MASTER_LIST_SHEET = "MasterList"
 
 # Master List Configuration
-DEFAULT_MASTER_LIST_SPREADSHEET_ID = "1PjW2-qgjWs5123qkzVyOBc-OKs2Ygk1143zkl_CymwQ"
+DEFAULT_MASTER_LIST_SPREADSHEET_ID = ""  # Leave empty to use main spreadsheet, or set to separate spreadsheet ID
 DEFAULT_MASTER_LIST_SHEET_NAME = "MasterList"
 
 CREDENTIALS_FILE = "credentials.json"

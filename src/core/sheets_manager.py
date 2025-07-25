@@ -27,6 +27,7 @@ class GoogleSheetsManager:
         self.spreadsheet_id = None
         self.sheet_name = "QR_Scans"
         self.master_list_sheet = "MasterList"
+        self.master_list_spreadsheet_id = None  # Separate spreadsheet for master list
         self.master_list_data = []
         self.credentials_file = None
         self.token_file = None
@@ -163,14 +164,14 @@ class GoogleSheetsManager:
             raise
     
     def _create_sheet_if_needed(self):
-        """Create the required sheets if they don't exist."""
+        """Create sheets if they don't exist."""
         try:
             # Get existing sheets
-            spreadsheet = self.sheets_service.spreadsheets().get(
+            result = self.sheets_service.spreadsheets().get(
                 spreadsheetId=self.spreadsheet_id
             ).execute()
             
-            existing_sheets = [sheet['properties']['title'] for sheet in spreadsheet['sheets']]
+            existing_sheets = [sheet['properties']['title'] for sheet in result['sheets']]
             
             # Create QR_Scans sheet if it doesn't exist
             if self.sheet_name not in existing_sheets:
@@ -178,11 +179,9 @@ class GoogleSheetsManager:
                 self._setup_scan_sheet_headers()
                 logger.info(f"Created sheet: {self.sheet_name}")
             
-            # Create MasterList sheet if it doesn't exist
-            if self.master_list_sheet not in existing_sheets:
-                self._create_sheet(self.master_list_sheet)
-                logger.info(f"Created sheet: {self.master_list_sheet}")
-                
+            # Note: MasterList sheet should be in a separate spreadsheet
+            # and will be created when needed in that spreadsheet
+            
         except Exception as e:
             logger.error(f"Error creating sheets: {str(e)}")
     
@@ -314,6 +313,9 @@ class GoogleSheetsManager:
             # Use Master List specific spreadsheet ID if configured, otherwise use main spreadsheet
             master_spreadsheet_id = getattr(self, 'master_list_spreadsheet_id', None) or self.spreadsheet_id
             
+            # Ensure master list sheet exists in the target spreadsheet
+            self._ensure_master_list_sheet_exists(master_spreadsheet_id)
+            
             # Get all data from MasterList sheet
             result = self.sheets_service.spreadsheets().values().get(
                 spreadsheetId=master_spreadsheet_id,
@@ -344,6 +346,44 @@ class GoogleSheetsManager:
         except Exception as e:
             logger.error(f"Error loading master list: {str(e)}")
             return 0
+    
+    def _ensure_master_list_sheet_exists(self, spreadsheet_id):
+        """Ensure the master list sheet exists in the specified spreadsheet."""
+        try:
+            # Get existing sheets in the master list spreadsheet
+            result = self.sheets_service.spreadsheets().get(
+                spreadsheetId=spreadsheet_id
+            ).execute()
+            
+            existing_sheets = [sheet['properties']['title'] for sheet in result['sheets']]
+            
+            # Create MasterList sheet if it doesn't exist
+            if self.master_list_sheet not in existing_sheets:
+                self._create_sheet_in_spreadsheet(spreadsheet_id, self.master_list_sheet)
+                logger.info(f"Created MasterList sheet in spreadsheet: {spreadsheet_id}")
+            
+        except Exception as e:
+            logger.error(f"Error ensuring master list sheet exists: {str(e)}")
+    
+    def _create_sheet_in_spreadsheet(self, spreadsheet_id, sheet_name):
+        """Create a new sheet in a specific spreadsheet."""
+        try:
+            request = {
+                'addSheet': {
+                    'properties': {
+                        'title': sheet_name
+                    }
+                }
+            }
+            
+            self.sheets_service.spreadsheets().batchUpdate(
+                spreadsheetId=spreadsheet_id,
+                body={'requests': [request]}
+            ).execute()
+            
+        except Exception as e:
+            logger.error(f"Error creating sheet {sheet_name} in spreadsheet {spreadsheet_id}: {str(e)}")
+            raise
     
     def update_master_list_config(self, spreadsheet_id: str, sheet_name: str):
         """

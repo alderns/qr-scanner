@@ -35,18 +35,45 @@ class SettingsTab:
         scrollable_frame = tk.Frame(canvas, bg=THEME_COLORS['background'])
         
         # Configure the canvas to expand with the frame
-        scrollable_frame.bind(
-            "<Configure>",
-            lambda e: canvas.configure(scrollregion=canvas.bbox("all"))
-        )
+        def _update_scroll_region(event=None):
+            canvas.configure(scrollregion=canvas.bbox("all"))
         
-        # Bind mouse wheel to canvas
+        scrollable_frame.bind("<Configure>", _update_scroll_region)
+        
+        # Enhanced mouse wheel handling for cross-platform compatibility
         def _on_mousewheel(event):
-            canvas.yview_scroll(int(-1*(event.delta/120)), "units")
+            try:
+                # Handle different platforms
+                if event.num == 4:  # Linux scroll up
+                    canvas.yview_scroll(-1, "units")
+                elif event.num == 5:  # Linux scroll down
+                    canvas.yview_scroll(1, "units")
+                else:  # Windows/Mac
+                    canvas.yview_scroll(int(-1*(event.delta/120)), "units")
+            except Exception as e:
+                # Fallback for any issues
+                try:
+                    canvas.yview_scroll(-1 if event.delta > 0 else 1, "units")
+                except:
+                    pass
         
-        # Bind mouse wheel events
+        # Bind mouse wheel events to multiple widgets for better coverage
         canvas.bind("<MouseWheel>", _on_mousewheel)
         scrollable_frame.bind("<MouseWheel>", _on_mousewheel)
+        main_container.bind("<MouseWheel>", _on_mousewheel)
+        
+        # Also bind to parent for better event capture
+        self.parent.bind("<MouseWheel>", _on_mousewheel)
+        
+        # Function to bind mouse wheel to all child widgets
+        def bind_mousewheel_to_widgets(widget):
+            """Recursively bind mouse wheel to all child widgets."""
+            widget.bind("<MouseWheel>", _on_mousewheel)
+            for child in widget.winfo_children():
+                bind_mousewheel_to_widgets(child)
+        
+        # Bind mouse wheel to all widgets in the scrollable frame
+        bind_mousewheel_to_widgets(scrollable_frame)
         
         # Create window in canvas and configure it to expand
         canvas_window = canvas.create_window((0, 0), window=scrollable_frame, anchor="nw")
@@ -73,6 +100,9 @@ class SettingsTab:
         
         # Master List section
         self._create_master_list_section(main_frame)
+        
+        # Bind mouse wheel to all widgets in the main frame
+        self._bind_mousewheel_to_widget(main_frame)
     
     def _create_google_sheets_section(self, parent):
         """Create the Google Sheets configuration section."""
@@ -82,6 +112,9 @@ class SettingsTab:
                                 highlightbackground=THEME_COLORS['border'],
                                 highlightcolor=THEME_COLORS['border'])
         section_frame.pack(fill=tk.X, pady=(0, COMPONENT_SPACING['card_margin']))
+        
+        # Bind mouse wheel to this section
+        self._bind_mousewheel_to_widget(section_frame)
         
         # Section header
         header_frame = tk.Frame(section_frame, bg=THEME_COLORS['surface'])
@@ -159,6 +192,9 @@ class SettingsTab:
                                 highlightcolor=THEME_COLORS['border'])
         section_frame.pack(fill=tk.X, pady=(0, COMPONENT_SPACING['card_margin']))
         
+        # Bind mouse wheel to this section
+        self._bind_mousewheel_to_widget(section_frame)
+        
         # Section header
         header_frame = tk.Frame(section_frame, bg=THEME_COLORS['surface'])
         header_frame.pack(fill=tk.X, padx=COMPONENT_SPACING['card_padding'], 
@@ -232,43 +268,73 @@ class SettingsTab:
         self.master_list_status.pack(anchor=tk.W)
     
     def _create_field_group(self, parent, label_text, default_value, toggle_command, field_name):
-        """Create a reusable field group with label, entry, and edit button."""
-        # Field container
+        """Create a field group with label, entry, and toggle button."""
+        # Container frame
         field_frame = tk.Frame(parent, bg=THEME_COLORS['surface'])
-        field_frame.pack(fill=tk.X, pady=(0, 16))
+        field_frame.pack(fill=tk.X, pady=(0, COMPONENT_SPACING['card_padding']))
         
         # Label
-        label = tk.Label(field_frame, text=f"{label_text}:", font=NORMAL_FONT,
+        label = tk.Label(field_frame, text=label_text, font=NORMAL_FONT, 
                         fg=THEME_COLORS['text'], bg=THEME_COLORS['surface'])
-        label.pack(anchor=tk.W, pady=(0, 8))
+        label.pack(anchor=tk.W, pady=(0, 4))
         
         # Entry and button frame
-        entry_frame = tk.Frame(field_frame, bg=THEME_COLORS['surface'])
-        entry_frame.pack(fill=tk.X)
+        input_frame = tk.Frame(field_frame, bg=THEME_COLORS['surface'])
+        input_frame.pack(fill=tk.X)
         
         # Entry field
-        entry = tk.Entry(entry_frame, font=NORMAL_FONT, 
-                        bg=THEME_COLORS['surface'], fg=THEME_COLORS['text'],
-                        relief='solid', borderwidth=1,
-                        highlightbackground=THEME_COLORS['border'],
-                        highlightcolor=THEME_COLORS['border'])
+        entry = tk.Entry(input_frame, font=NORMAL_FONT, state='readonly',
+                        bg=THEME_COLORS['background'], fg=THEME_COLORS['text'],
+                        relief='solid', borderwidth=1)
+        entry.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(0, 8))
         entry.insert(0, default_value)
-        entry.configure(state='readonly')
         
-        # Prevent text selection in readonly mode
-        entry.bind('<Button-1>', lambda e: 'break' if entry.cget('state') == 'readonly' else None)
-        entry.bind('<B1-Motion>', lambda e: 'break' if entry.cget('state') == 'readonly' else None)
-        entry.pack(side=tk.LEFT, fill=tk.X, expand=True)
+        # Toggle button
+        button = ModernButton(input_frame, text="Edit", style='secondary',
+                             command=toggle_command)
+        button.pack(side=tk.RIGHT)
         
-        # Edit button
-        edit_btn = ModernButton(entry_frame, text="Edit", 
-                               style='secondary',
-                               command=toggle_command)
-        edit_btn.pack(side=tk.RIGHT, padx=(8, 0))
+        # Store references for later access
+        if field_name == "spreadsheet":
+            self.spreadsheet_entry = entry
+            self.edit_spreadsheet_btn = button
+        elif field_name == "sheet_name":
+            self.sheet_name_entry = entry
+            self.edit_sheet_name_btn = button
+        elif field_name == "master_spreadsheet":
+            self.master_spreadsheet_entry = entry
+            self.edit_master_spreadsheet_btn = button
+        elif field_name == "master_sheet_name":
+            self.master_sheet_name_entry = entry
+            self.edit_master_sheet_name_btn = button
         
-        # Store references
-        setattr(self, f"{field_name}_entry", entry)
-        setattr(self, f"edit_{field_name}_btn", edit_btn)
+        # Bind mouse wheel to all widgets in this field group
+        self._bind_mousewheel_to_widget(field_frame)
+    
+    def _bind_mousewheel_to_widget(self, widget):
+        """Bind mouse wheel to a widget and all its children."""
+        def _on_mousewheel(event):
+            try:
+                # Find the canvas widget to scroll
+                canvas = None
+                current = widget
+                while current and not isinstance(current, tk.Canvas):
+                    current = current.master
+                
+                if current and isinstance(current, tk.Canvas):
+                    canvas = current
+                    if event.num == 4:  # Linux scroll up
+                        canvas.yview_scroll(-1, "units")
+                    elif event.num == 5:  # Linux scroll down
+                        canvas.yview_scroll(1, "units")
+                    else:  # Windows/Mac
+                        canvas.yview_scroll(int(-1*(event.delta/120)), "units")
+            except Exception as e:
+                pass
+        
+        widget.bind("<MouseWheel>", _on_mousewheel)
+        for child in widget.winfo_children():
+            self._bind_mousewheel_to_widget(child)
     
     def _check_initial_status(self):
         """Check initial status of credentials and connection."""
