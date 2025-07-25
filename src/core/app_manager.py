@@ -391,6 +391,24 @@ class QRScannerApp(LoggerMixin):
             self.log_error(f"Error setting up credentials: {str(e)}")
             return False
     
+    def check_credentials(self) -> bool:
+        """Check if Google Sheets credentials are available."""
+        try:
+            if not self.sheets_manager:
+                return False
+                
+            # Check if credentials file exists and token file exists
+            from ..config.paths import get_credentials_path, get_token_path
+            import os
+            
+            creds_path = get_credentials_path()
+            token_path = get_token_path()
+            
+            return os.path.exists(creds_path) and os.path.exists(token_path)
+        except Exception as e:
+            self.log_error(f"Error checking credentials: {str(e)}")
+            return False
+    
     def connect_to_sheets(self, spreadsheet_id: str, sheet_name: str) -> str:
         """Connect to Google Sheets."""
         try:
@@ -414,7 +432,13 @@ class QRScannerApp(LoggerMixin):
     
     def is_sheets_connected(self) -> bool:
         """Check if connected to Google Sheets."""
-        return self.sheets_manager.is_connected()
+        try:
+            if not self.sheets_manager:
+                return False
+            return self.sheets_manager.is_connected()
+        except Exception as e:
+            self.log_error(f"Error checking sheets connection: {str(e)}")
+            return False
     
     def load_master_list(self) -> int:
         """Load master list data from Google Sheets."""

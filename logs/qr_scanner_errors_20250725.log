@@ -131,3 +131,72 @@ Traceback (most recent call last):
     self.filter_entry.pack(side=tk.LEFT, padx=(COMPONENT_SPACING['form_field_margin'], COMPONENT_SPACING['sm']))
                                                                                        ~~~~~~~~~~~~~~~~~^^^^^^
 KeyError: 'sm'
+2025-07-25 12:27:52,786 - src.utils.file_utils - ERROR - main:61 - Unexpected error: 'QRScannerApp' object has no attribute 'check_credentials'
+Traceback (most recent call last):
+  File "C:\Users\aldri\Downloads\qr\main.py", line 32, in main
+    main_window = MainWindow(root, app_manager)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\aldri\Downloads\qr\src\gui\main_window.py", line 36, in __init__
+    self.setup_gui()
+  File "C:\Users\aldri\Downloads\qr\src\gui\main_window.py", line 85, in setup_gui
+    self._create_main_content(self.main_container)
+  File "C:\Users\aldri\Downloads\qr\src\gui\main_window.py", line 127, in _create_main_content
+    self._create_settings_tab(settings_frame)
+  File "C:\Users\aldri\Downloads\qr\src\gui\main_window.py", line 184, in _create_settings_tab
+    self.settings_tab = SettingsTab(parent, self.app_manager, callbacks)
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\aldri\Downloads\qr\src\gui\tabs\settings_tab.py", line 23, in __init__
+    self._check_initial_status()
+  File "C:\Users\aldri\Downloads\qr\src\gui\tabs\settings_tab.py", line 129, in _check_initial_status
+    if self.app_manager.check_credentials():
+       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'QRScannerApp' object has no attribute 'check_credentials'. Did you mean: 'setup_credentials'?
+2025-07-25 12:29:15,233 - src.utils.file_utils - ERROR - main:61 - Unexpected error: 'NoneType' object has no attribute 'is_connected'
+Traceback (most recent call last):
+  File "C:\Users\aldri\Downloads\qr\main.py", line 32, in main
+    main_window = MainWindow(root, app_manager)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\aldri\Downloads\qr\src\gui\main_window.py", line 36, in __init__
+    self.setup_gui()
+  File "C:\Users\aldri\Downloads\qr\src\gui\main_window.py", line 85, in setup_gui
+    self._create_main_content(self.main_container)
+  File "C:\Users\aldri\Downloads\qr\src\gui\main_window.py", line 127, in _create_main_content
+    self._create_settings_tab(settings_frame)
+  File "C:\Users\aldri\Downloads\qr\src\gui\main_window.py", line 184, in _create_settings_tab
+    self.settings_tab = SettingsTab(parent, self.app_manager, callbacks)
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\aldri\Downloads\qr\src\gui\tabs\settings_tab.py", line 23, in __init__
+    self._check_initial_status()
+  File "C:\Users\aldri\Downloads\qr\src\gui\tabs\settings_tab.py", line 138, in _check_initial_status
+    if self.app_manager.is_sheets_connected():
+       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\aldri\Downloads\qr\src\core\app_manager.py", line 434, in is_sheets_connected
+    return self.sheets_manager.is_connected()
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'NoneType' object has no attribute 'is_connected'
+2025-07-25 13:30:23,599 - src.utils.file_utils - ERROR - main:61 - Unexpected error: unknown option "-bg"
+Traceback (most recent call last):
+  File "C:\Users\aldri\Downloads\qr\main.py", line 32, in main
+    main_window = MainWindow(root, app_manager)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\aldri\Downloads\qr\src\gui\main_window.py", line 37, in __init__
+    self.setup_gui()
+  File "C:\Users\aldri\Downloads\qr\src\gui\main_window.py", line 86, in setup_gui
+    self._create_main_content(self.main_container)
+  File "C:\Users\aldri\Downloads\qr\src\gui\main_window.py", line 133, in _create_main_content
+    self._create_history_tab(history_frame)
+  File "C:\Users\aldri\Downloads\qr\src\gui\main_window.py", line 193, in _create_history_tab
+    self.history_tab = HistoryTab(parent, self.app_manager, callbacks)
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\aldri\Downloads\qr\src\gui\tabs\history_tab.py", line 24, in __init__
+    self._create_history_interface()
+  File "C:\Users\aldri\Downloads\qr\src\gui\tabs\history_tab.py", line 61, in _create_history_interface
+    self.history_tree = ttk.Treeview(tree_frame, bg=THEME_COLORS['background'], columns=columns, show='headings', height=15)
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Program Files\WindowsApps\PythonSoftwareFoundation.Python.3.12_3.12.2800.0_x64__qbz5n2kfra8p0\Lib\tkinter\ttk.py", line 1180, in __init__
+    Widget.__init__(self, master, "ttk::treeview", kw)
+  File "C:\Program Files\WindowsApps\PythonSoftwareFoundation.Python.3.12_3.12.2800.0_x64__qbz5n2kfra8p0\Lib\tkinter\ttk.py", line 527, in __init__
+    tkinter.Widget.__init__(self, master, widgetname, kw=kw)
+  File "C:\Program Files\WindowsApps\PythonSoftwareFoundation.Python.3.12_3.12.2800.0_x64__qbz5n2kfra8p0\Lib\tkinter\__init__.py", line 2661, in __init__
+    self.tk.call(
+_tkinter.TclError: unknown option "-bg"

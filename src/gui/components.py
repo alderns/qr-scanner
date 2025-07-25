@@ -57,7 +57,9 @@ class Tooltip:
         self.tooltip.wm_geometry(f"+{x}+{y}")
         
         # Configure tooltip appearance
-        self.tooltip.configure(bg=THEME_COLORS['surface'], relief='solid', borderwidth=1)
+        self.tooltip.configure(bg=THEME_COLORS['surface'], relief='solid', borderwidth=1,
+                              highlightbackground=THEME_COLORS['border'],
+                              highlightcolor=THEME_COLORS['border'])
         
         # Create tooltip label
         label = tk.Label(self.tooltip, text=self.text, 

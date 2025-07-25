@@ -193,8 +193,11 @@ class LogsTab:
                     if entry:
                         self.log_entries.append(entry)
             
+            # Sort log entries by timestamp (newest first)
+            self.log_entries.sort(key=lambda x: x['timestamp'], reverse=True)
+            
             self._apply_filter()
-            self._update_status(f"Loaded {len(self.log_entries)} entries from {filename}")
+            self._update_status(f"Loaded {len(self.log_entries)} entries from {filename} (newest first)")
             
         except Exception as e:
             self._update_status(f"Error loading log content: {str(e)}")
@@ -254,7 +257,7 @@ class LogsTab:
             self.filtered_entries.append(entry)
         
         self._update_log_display()
-        self._update_status(f"Showing {len(self.filtered_entries)} of {len(self.log_entries)} entries")
+        self._update_status(f"Showing {len(self.filtered_entries)} of {len(self.log_entries)} entries (newest first)")
     
     def _update_log_display(self):
         """Update the log display with filtered entries."""
@@ -262,8 +265,13 @@ class LogsTab:
         for item in self.log_tree.get_children():
             self.log_tree.delete(item)
         
-        # Add filtered entries
-        for entry in self.filtered_entries:
+        # Sort filtered entries by timestamp (newest first)
+        sorted_entries = sorted(self.filtered_entries, 
+                               key=lambda x: x['timestamp'], 
+                               reverse=True)
+        
+        # Add filtered entries (newest first)
+        for entry in sorted_entries:
             # Color code by level
             tags = (entry['level'].lower(),)
             
@@ -280,6 +288,10 @@ class LogsTab:
         self.log_tree.tag_configure('warning', foreground='orange')
         self.log_tree.tag_configure('error', foreground='red')
         self.log_tree.tag_configure('critical', foreground='darkred')
+        
+        # Scroll to top to show latest entries
+        if self.log_tree.get_children():
+            self.log_tree.yview_moveto(0)
     
     def _on_log_file_selected(self, event):
         """Handle log file selection."""

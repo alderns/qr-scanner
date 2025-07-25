@@ -3,163 +3,241 @@ Settings tab component for the QR Scanner application.
 """
 
 import tkinter as tk
-from tkinter import ttk, messagebox, filedialog
-from typing import Optional
+from tkinter import ttk, filedialog, messagebox
+from typing import Dict, Any
 
+from ...config.theme import THEME_COLORS, HEADER_FONT, NORMAL_FONT, COMPONENT_SPACING
+from ...config.settings import DEFAULT_SPREADSHEET_ID, DEFAULT_SHEET_NAME
 from ..components import ModernButton, StatusIndicator
-from ...config.theme import (
-    THEME_COLORS, HEADER_FONT, NORMAL_FONT, COMPONENT_SPACING
-)
-from ...config.settings import (
-    DEFAULT_SPREADSHEET_ID, DEFAULT_SHEET_NAME
-)
 
 
 class SettingsTab:
-    """Settings tab component for Google Sheets and master list configuration."""
+    """Simplified settings tab for essential configuration."""
     
     def __init__(self, parent: tk.Frame, app_manager, callbacks: dict):
-        """
-        Initialize the settings tab.
-        
-        Args:
-            parent: Parent frame
-            app_manager: Application manager instance
-            callbacks: Dictionary of callback functions
-        """
         self.parent = parent
         self.app_manager = app_manager
         self.callbacks = callbacks
         
-        # GUI components
-        self.credentials_button: Optional[ModernButton] = None
-        self.spreadsheet_entry: Optional[tk.Entry] = None
-        self.sheet_name_entry: Optional[tk.Entry] = None
-        self.connect_button: Optional[ModernButton] = None
-        self.sheets_status: Optional[StatusIndicator] = None
-        self.master_list_status: Optional[StatusIndicator] = None
-        self.auto_load_var: Optional[tk.BooleanVar] = None
-        
-        # State
-        self.auto_load_master_list = True
-        
         self._create_settings_interface()
+        # Delay initial status check to ensure GUI is fully initialized
+        self.parent.after(100, self._check_initial_status)
     
     def _create_settings_interface(self):
-        """Create the settings interface."""
-        # Google Sheets section
-        sheets_card = tk.Frame(self.parent, bg=THEME_COLORS['surface'], 
-                              relief='solid', borderwidth=1)
-        sheets_card.pack(fill=tk.X, pady=COMPONENT_SPACING['card_margin'])
+        """Create a simplified settings interface."""
+        # Main container
+        main_frame = tk.Frame(self.parent, bg=THEME_COLORS['background'])
+        main_frame.pack(fill=tk.BOTH, expand=True, padx=20, pady=20)
         
-        sheets_title = tk.Label(sheets_card, text="Google Sheets Integration", 
-                               font=HEADER_FONT, fg=THEME_COLORS['text'], 
-                               bg=THEME_COLORS['surface'])
-        sheets_title.pack(pady=COMPONENT_SPACING['header_padding'])
+        # Google Sheets section (simplified)
+        sheets_frame = tk.Frame(main_frame, bg=THEME_COLORS['surface'], 
+                               relief='solid', borderwidth=1,
+                               highlightbackground=THEME_COLORS['border'],
+                               highlightcolor=THEME_COLORS['border'])
+        sheets_frame.pack(fill=tk.X, pady=(0, 20))
         
-        # Credentials section
-        cred_frame = tk.Frame(sheets_card, bg=THEME_COLORS['surface'])
-        cred_frame.pack(fill=tk.X, padx=COMPONENT_SPACING['card_padding'], 
-                       pady=(0, COMPONENT_SPACING['card_padding']))
+        # Title
+        title_label = tk.Label(sheets_frame, text="Google Sheets Setup", 
+                              font=HEADER_FONT, fg=THEME_COLORS['text'], 
+                              bg=THEME_COLORS['surface'])
+        title_label.pack(pady=15)
         
-        cred_label = tk.Label(cred_frame, text="API Credentials:", font=NORMAL_FONT,
-                             fg=THEME_COLORS['text'], bg=THEME_COLORS['surface'])
-        cred_label.pack(anchor=tk.W, pady=(0, COMPONENT_SPACING['form_label_margin']))
+        # Credentials status
+        self.credentials_status = StatusIndicator(sheets_frame, "Checking credentials...", "neutral")
+        self.credentials_status.pack(pady=(0, 15))
         
-        self.credentials_status = StatusIndicator(cred_frame, "Checking credentials...", "neutral")
-        self.credentials_status.pack(anchor=tk.W)
-        
-        # Manual setup button (only shown if auto-setup fails)
-        self.credentials_button = ModernButton(cred_frame, text="Setup Credentials Manually", 
+        # Setup credentials button
+        self.credentials_button = ModernButton(sheets_frame, text="Setup Credentials", 
                                               style='warning',
                                               command=self._setup_credentials)
-        self.credentials_button.pack(anchor=tk.W, pady=(COMPONENT_SPACING['form_field_margin'], 0))
-        self.credentials_button.pack_forget()  # Hide by default
+        self.credentials_button.pack(pady=(0, 15))
         
-        # Connection section
-        conn_frame = tk.Frame(sheets_card, bg=THEME_COLORS['surface'])
-        conn_frame.pack(fill=tk.X, padx=COMPONENT_SPACING['card_padding'], 
-                       pady=(0, COMPONENT_SPACING['card_padding']))
-        
-        conn_label = tk.Label(conn_frame, text="Spreadsheet Connection:", font=NORMAL_FONT,
-                             fg=THEME_COLORS['text'], bg=THEME_COLORS['surface'])
-        conn_label.pack(anchor=tk.W, pady=(0, COMPONENT_SPACING['form_section_margin']))
+        # Connection fields
+        conn_frame = tk.Frame(sheets_frame, bg=THEME_COLORS['surface'])
+        conn_frame.pack(fill=tk.X, padx=20, pady=(0, 15))
         
         # Spreadsheet ID
-        id_frame = tk.Frame(conn_frame, bg=THEME_COLORS['surface'])
-        id_frame.pack(fill=tk.X, pady=(0, COMPONENT_SPACING['form_field_margin']))
-        
-        tk.Label(id_frame, text="Spreadsheet ID:", font=NORMAL_FONT,
+        tk.Label(conn_frame, text="Spreadsheet ID:", font=NORMAL_FONT,
                 fg=THEME_COLORS['text'], bg=THEME_COLORS['surface']).pack(anchor=tk.W)
-        self.spreadsheet_entry = tk.Entry(id_frame, font=NORMAL_FONT, 
+        self.spreadsheet_entry = tk.Entry(conn_frame, font=NORMAL_FONT, 
                                          bg=THEME_COLORS['surface'], fg=THEME_COLORS['text'],
-                                         relief='solid', borderwidth=1)
+                                         relief='solid', borderwidth=1,
+                                         highlightbackground=THEME_COLORS['border'],
+                                         highlightcolor=THEME_COLORS['border'])
         self.spreadsheet_entry.insert(0, DEFAULT_SPREADSHEET_ID)
-        self.spreadsheet_entry.pack(fill=tk.X, pady=(COMPONENT_SPACING['entry_margin'], 0))
+        self.spreadsheet_entry.pack(fill=tk.X, pady=(5, 10))
         
         # Sheet name
-        sheet_frame = tk.Frame(conn_frame, bg=THEME_COLORS['surface'])
-        sheet_frame.pack(fill=tk.X, pady=(0, COMPONENT_SPACING['form_field_margin']))
-        
-        tk.Label(sheet_frame, text="Sheet Name:", font=NORMAL_FONT,
+        tk.Label(conn_frame, text="Sheet Name:", font=NORMAL_FONT,
                 fg=THEME_COLORS['text'], bg=THEME_COLORS['surface']).pack(anchor=tk.W)
-        self.sheet_name_entry = tk.Entry(sheet_frame, font=NORMAL_FONT,
+        self.sheet_name_entry = tk.Entry(conn_frame, font=NORMAL_FONT,
                                         bg=THEME_COLORS['surface'], fg=THEME_COLORS['text'],
-                                        relief='solid', borderwidth=1)
+                                        relief='solid', borderwidth=1,
+                                        highlightbackground=THEME_COLORS['border'],
+                                        highlightcolor=THEME_COLORS['border'])
         self.sheet_name_entry.insert(0, DEFAULT_SHEET_NAME)
-        self.sheet_name_entry.pack(fill=tk.X, pady=(COMPONENT_SPACING['entry_margin'], 0))
+        self.sheet_name_entry.pack(fill=tk.X, pady=(5, 10))
         
         # Connect button
-        self.connect_button = ModernButton(conn_frame, text="Connect to Sheets", 
+        self.connect_button = ModernButton(conn_frame, text="Connect", 
                                           style='success',
                                           command=self._connect_to_sheets)
-        self.connect_button.pack(anchor=tk.W, pady=(COMPONENT_SPACING['form_section_margin'], 0))
+        self.connect_button.pack(anchor=tk.W, pady=(5, 0))
         
         # Connection status
-        self.sheets_status = StatusIndicator(sheets_card, "Not connected to Google Sheets", "error")
-        self.sheets_status.pack(pady=(0, COMPONENT_SPACING['card_padding']))
+        self.sheets_status = StatusIndicator(sheets_frame, "Not connected", "error")
+        self.sheets_status.pack(pady=(0, 15))
         
-        # Master List section
-        master_list_card = tk.Frame(self.parent, bg=THEME_COLORS['surface'], 
-                                   relief='solid', borderwidth=1)
-        master_list_card.pack(fill=tk.X, pady=COMPONENT_SPACING['card_margin'])
+        # Master List section (simplified)
+        master_frame = tk.Frame(main_frame, bg=THEME_COLORS['surface'], 
+                               relief='solid', borderwidth=1,
+                               highlightbackground=THEME_COLORS['border'],
+                               highlightcolor=THEME_COLORS['border'])
+        master_frame.pack(fill=tk.X)
         
-        master_list_title = tk.Label(master_list_card, text="Master List Management", 
-                                    font=HEADER_FONT, fg=THEME_COLORS['text'], 
-                                    bg=THEME_COLORS['surface'])
-        master_list_title.pack(pady=COMPONENT_SPACING['header_padding'])
+        # Title
+        master_title = tk.Label(master_frame, text="Master List", 
+                               font=HEADER_FONT, fg=THEME_COLORS['text'], 
+                               bg=THEME_COLORS['surface'])
+        master_title.pack(pady=15)
         
-        # Master list controls
-        ml_controls = tk.Frame(master_list_card, bg=THEME_COLORS['surface'])
-        ml_controls.pack(fill=tk.X, padx=COMPONENT_SPACING['card_padding'], 
-                        pady=(0, COMPONENT_SPACING['card_padding']))
+        # Controls
+        controls_frame = tk.Frame(master_frame, bg=THEME_COLORS['surface'])
+        controls_frame.pack(fill=tk.X, padx=20, pady=(0, 15))
         
+        # Auto-load checkbox
         self.auto_load_var = tk.BooleanVar(value=True)
-        auto_load_check = tk.Checkbutton(ml_controls, text="Auto-load Master List", 
+        auto_load_check = tk.Checkbutton(controls_frame, text="Auto-load on startup", 
                                         variable=self.auto_load_var, 
                                         command=self._update_auto_load_setting,
                                         font=NORMAL_FONT, bg=THEME_COLORS['surface'],
                                         fg=THEME_COLORS['text'])
         auto_load_check.pack(side=tk.LEFT)
         
-        load_button = ModernButton(ml_controls, text="Load Master List", 
+        # Load button
+        load_button = ModernButton(controls_frame, text="Load Now", 
                                   style='secondary',
                                   command=self._load_master_list)
         load_button.pack(side=tk.RIGHT)
         
-        debug_button = ModernButton(ml_controls, text="Debug Structure", 
-                                   style='warning',
-                                   command=self._debug_master_list)
-        debug_button.pack(side=tk.RIGHT, padx=(COMPONENT_SPACING['button_margin'], 0))
+        # Status
+        self.master_list_status = StatusIndicator(master_frame, "Not loaded", "neutral")
+        self.master_list_status.pack(pady=(0, 15))
+    
+    def _check_initial_status(self):
+        """Check initial status of credentials and connection."""
+        # First, try to auto-setup credentials if they exist
+        self._auto_setup_credentials()
         
-        # Master list status
-        self.master_list_status = StatusIndicator(master_list_card, "Not loaded", "neutral")
-        self.master_list_status.pack(pady=(0, 20))
+        # Check credentials status after auto-setup
+        try:
+            if self.app_manager.check_credentials():
+                self.credentials_status.set_status('success')
+                self.credentials_status.set_text("Credentials OK")
+                self.credentials_button.pack_forget()
+                
+                # Auto-connect to sheets if credentials are available
+                self._auto_connect_to_sheets()
+            else:
+                self.credentials_status.set_status('error')
+                self.credentials_status.set_text("Credentials needed")
+        except Exception:
+            self.credentials_status.set_status('error')
+            self.credentials_status.set_text("Credentials needed")
+        
+        # Check sheets connection
+        try:
+            if self.app_manager.is_sheets_connected():
+                self.sheets_status.set_status('success')
+                self.sheets_status.set_text("Connected")
+                
+                # Auto-load master list if connected
+                self._auto_load_master_list_data()
+            else:
+                self.sheets_status.set_status('error')
+                self.sheets_status.set_text("Not connected")
+        except Exception:
+            self.sheets_status.set_status('error')
+            self.sheets_status.set_text("Not connected")
+    
+    def _auto_connect_to_sheets(self):
+        """Automatically connect to sheets using default settings."""
+        try:
+            spreadsheet_id = self.spreadsheet_entry.get().strip()
+            sheet_name = self.sheet_name_entry.get().strip()
+            
+            if spreadsheet_id and sheet_name:
+                if self.callbacks.get('update_status'):
+                    self.callbacks['update_status']("Auto-connecting to Google Sheets...")
+                
+                spreadsheet_title = self.app_manager.connect_to_sheets(spreadsheet_id, sheet_name)
+                self.sheets_status.set_status('success')
+                self.sheets_status.set_text(f"Connected to {spreadsheet_title}")
+                
+                if self.callbacks.get('update_status'):
+                    self.callbacks['update_status'](f"Auto-connected to: {spreadsheet_title}")
+                
+                # Auto-load master list after successful connection
+                self._auto_load_master_list_data()
+            else:
+                self.sheets_status.set_status('error')
+                self.sheets_status.set_text("Missing spreadsheet settings")
+                if self.callbacks.get('update_status'):
+                    self.callbacks['update_status']("Please configure spreadsheet ID and sheet name")
+        except Exception as e:
+            self.sheets_status.set_status('error')
+            self.sheets_status.set_text("Auto-connect failed")
+            if self.callbacks.get('update_status'):
+                self.callbacks['update_status'](f"Auto-connect failed: {str(e)}")
+    
+    def _auto_setup_credentials(self):
+        """Automatically setup credentials if they exist."""
+        try:
+            from ...config.paths import get_credentials_path
+            import os
+            
+            credentials_path = get_credentials_path()
+            if os.path.exists(credentials_path):
+                # Check if credentials are already set up
+                if self.app_manager.check_credentials():
+                    self.credentials_status.set_status('success')
+                    self.credentials_status.set_text("Credentials OK")
+                    self.credentials_button.pack_forget()
+                    if self.callbacks.get('update_status'):
+                        self.callbacks['update_status']("Credentials already configured")
+                    return
+                
+                # Auto-setup credentials
+                if self.callbacks.get('update_status'):
+                    self.callbacks['update_status']("Auto-setting up credentials...")
+                
+                if self.app_manager.setup_credentials(str(credentials_path)):
+                    self.credentials_status.set_status('success')
+                    self.credentials_status.set_text("Credentials OK")
+                    self.credentials_button.pack_forget()
+                    
+                    if self.callbacks.get('update_status'):
+                        self.callbacks['update_status']("Credentials auto-configured")
+                else:
+                    self.credentials_status.set_status('error')
+                    self.credentials_status.set_text("Auto-setup failed")
+                    if self.callbacks.get('update_status'):
+                        self.callbacks['update_status']("Failed to auto-configure credentials")
+            else:
+                self.credentials_status.set_status('error')
+                self.credentials_status.set_text("No credentials.json found")
+                if self.callbacks.get('update_status'):
+                    self.callbacks['update_status']("Please add credentials.json file")
+        except Exception as e:
+            self.credentials_status.set_status('error')
+            self.credentials_status.set_text("Auto-setup failed")
+            if self.callbacks.get('update_status'):
+                self.callbacks['update_status'](f"Auto-setup failed: {str(e)}")
     
     def _setup_credentials(self):
-        """Setup Google Sheets API credentials manually."""
+        """Setup Google Sheets API credentials."""
         filename = filedialog.askopenfilename(
-            title="Select Google Sheets API Credentials File",
+            title="Select credentials.json file",
             filetypes=[("JSON files", "*.json"), ("All files", "*.*")]
         )
         
@@ -167,138 +245,104 @@ class SettingsTab:
             try:
                 if self.app_manager.setup_credentials(filename):
                     self.credentials_status.set_status('success')
-                    self.credentials_status.set_text("Credentials configured successfully")
-                    self.credentials_button.pack_forget()  # Hide the button
+                    self.credentials_status.set_text("Credentials OK")
+                    self.credentials_button.pack_forget()
                     if self.callbacks.get('update_status'):
-                        self.callbacks['update_status']("Google Sheets credentials configured")
+                        self.callbacks['update_status']("Credentials configured")
                 else:
-                    self.credentials_status.set_status('error')
-                    self.credentials_status.set_text("Failed to configure credentials")
                     if self.callbacks.get('update_status'):
-                        self.callbacks['update_status']("Failed to configure credentials")
+                        self.callbacks['update_status']("Failed to setup credentials")
             except Exception as e:
-                error_msg = f"Error setting up credentials: {str(e)}"
-                self.credentials_status.set_status('error')
-                self.credentials_status.set_text("Error configuring credentials")
                 if self.callbacks.get('update_status'):
-                    self.callbacks['update_status'](error_msg)
-                messagebox.showerror("Error", f"Failed to setup credentials: {error_msg}")
+                    self.callbacks['update_status'](f"Error: {str(e)}")
     
     def _connect_to_sheets(self):
-        """Connect to a specific Google Spreadsheet."""
+        """Connect to Google Sheets."""
         spreadsheet_id = self.spreadsheet_entry.get().strip()
         sheet_name = self.sheet_name_entry.get().strip()
         
+        if not spreadsheet_id or not sheet_name:
+            messagebox.showwarning("Invalid Input", "Please enter both Spreadsheet ID and Sheet Name")
+            return
+        
+        if self.callbacks.get('update_status'):
+            self.callbacks['update_status']("Connecting to Google Sheets...")
+        
         try:
-            if self.callbacks.get('update_status'):
-                self.callbacks['update_status']("Connecting to Google Sheets...")
             spreadsheet_title = self.app_manager.connect_to_sheets(spreadsheet_id, sheet_name)
-            
             self.sheets_status.set_status('success')
             self.sheets_status.set_text(f"Connected to {spreadsheet_title}")
+            
             if self.callbacks.get('update_status'):
                 self.callbacks['update_status'](f"Connected to: {spreadsheet_title}")
             
             # Auto-load master list if enabled
-            if self.auto_load_master_list:
-                self.parent.after(1000, self._auto_load_master_list_data)
-            
-            messagebox.showinfo("Success", f"Connected to spreadsheet: {spreadsheet_title}")
-            
+            if self.auto_load_var.get():
+                self._auto_load_master_list_data()
+                
         except Exception as e:
             self.sheets_status.set_status('error')
-            self.sheets_status.set_text(f"Connection error: {str(e)}")
+            self.sheets_status.set_text(f"Connection failed: {str(e)}")
             if self.callbacks.get('update_status'):
                 self.callbacks['update_status'](f"Connection error: {str(e)}")
-            messagebox.showerror("Error", str(e))
     
     def _load_master_list(self):
-        """Load master list data from Google Sheets."""
+        """Load master list data."""
         if not self.app_manager.is_sheets_connected():
             messagebox.showwarning("Not Connected", "Please connect to Google Sheets first!")
             return
         
+        if self.callbacks.get('update_status'):
+            self.callbacks['update_status']("Loading master list...")
+        
         try:
-            # Update status
-            self.master_list_status.set_status('warning')
-            self.master_list_status.set_text("Loading...")
-            if self.callbacks.get('update_status'):
-                self.callbacks['update_status']("Loading master list...")
-            self.parent.update()
-            
-            # Get master list data
             count = self.app_manager.load_master_list()
-            
             if count > 0:
                 self.master_list_status.set_status('success')
                 self.master_list_status.set_text(f"Loaded {count} records")
                 if self.callbacks.get('update_status'):
                     self.callbacks['update_status'](f"Master list loaded: {count} records")
-                messagebox.showinfo("Master List Loaded", f"Successfully loaded {count} records from master list")
             else:
                 self.master_list_status.set_status('error')
                 self.master_list_status.set_text("No data found")
                 if self.callbacks.get('update_status'):
                     self.callbacks['update_status']("No data found in master list")
-                messagebox.showwarning("No Data", "No data found in master list sheet")
-                
         except Exception as e:
             self.master_list_status.set_status('error')
-            self.master_list_status.set_text("Error loading")
+            self.master_list_status.set_text("Load failed")
             if self.callbacks.get('update_status'):
                 self.callbacks['update_status'](f"Error loading master list: {str(e)}")
-            messagebox.showerror("Error", f"Failed to load master list: {str(e)}")
-    
-    def _debug_master_list(self):
-        """Debug the master list structure."""
-        debug_info = self.app_manager.debug_master_list_structure()
-        
-        # Also test the specific volunteer ID lookup
-        test_id = "CCFM-W-003"
-        volunteer_info = self.app_manager.lookup_volunteer(test_id)
-        if volunteer_info:
-            debug_info += f"\n\nTest lookup for {test_id}:"
-            debug_info += f"\nFirst Name: '{volunteer_info['first_name']}'"
-            debug_info += f"\nLast Name: '{volunteer_info['last_name']}'"
-        else:
-            debug_info += f"\n\nTest lookup for {test_id}: NOT FOUND in master list"
-        
-        messagebox.showinfo("Master List Debug Info", debug_info)
     
     def _update_auto_load_setting(self):
-        """Update the auto-load setting based on checkbox."""
-        self.auto_load_master_list = self.auto_load_var.get()
-        status = "enabled" if self.auto_load_master_list else "disabled"
+        """Update the auto-load setting."""
+        enabled = "enabled" if self.auto_load_var.get() else "disabled"
         if self.callbacks.get('update_status'):
-            self.callbacks['update_status'](f"Auto-load master list {status}")
+            self.callbacks['update_status'](f"Auto-load {enabled}")
     
     def _auto_load_master_list_data(self):
-        """Automatically load master list data without showing dialogs."""
+        """Automatically load master list data."""
         if not self.app_manager.is_sheets_connected():
             return
         
+        # Check if auto-load is enabled
+        if not self.auto_load_var.get():
+            return
+        
         try:
-            # Update status
-            self.master_list_status.set_status('warning')
-            self.master_list_status.set_text("Auto-loading...")
             if self.callbacks.get('update_status'):
                 self.callbacks['update_status']("Auto-loading master list...")
-            self.parent.update()
             
-            # Get master list data
             count = self.app_manager.load_master_list()
-            
             if count > 0:
                 self.master_list_status.set_status('success')
                 self.master_list_status.set_text(f"Auto-loaded {count} records")
                 if self.callbacks.get('update_status'):
-                    self.callbacks['update_status'](f"Auto-loaded {count} records from master list")
+                    self.callbacks['update_status'](f"Auto-loaded {count} records")
             else:
                 self.master_list_status.set_status('error')
                 self.master_list_status.set_text("No master list data")
                 if self.callbacks.get('update_status'):
-                    self.callbacks['update_status']("No data found in master list sheet")
-                
+                    self.callbacks['update_status']("No data found in master list")
         except Exception as e:
             self.master_list_status.set_status('error')
             self.master_list_status.set_text("Auto-load failed")
@@ -306,11 +350,11 @@ class SettingsTab:
                 self.callbacks['update_status'](f"Auto-load failed: {str(e)}")
     
     def update_credentials_status(self, status: str, message: str):
-        """Update the credentials status display."""
+        """Update the credentials status indicator."""
         self.credentials_status.set_status(status)
         self.credentials_status.set_text(message)
         
         if status == 'error':
-            self.credentials_button.pack(anchor=tk.W, pady=(5, 0))
+            self.credentials_button.pack(pady=(0, 15))
         else:
             self.credentials_button.pack_forget() 

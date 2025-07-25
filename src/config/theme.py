@@ -12,7 +12,7 @@ THEME_COLORS = {
     'surface': '#ffffff',
     'text': '#202124',
     'text_secondary': '#5f6368',
-    'border': '#dadce0',
+    'border': '#e8eaed',
     'hover': '#f8f9fa',
     'disabled': '#9aa0a6',
     'shadow': '#00000020',

@@ -47,7 +47,9 @@ class ScannerTab:
         
         # Camera section
         camera_card = tk.Frame(left_panel, bg=THEME_COLORS['surface'], 
-                              relief='solid', borderwidth=1)
+                              relief='solid', borderwidth=1,
+                              highlightbackground=THEME_COLORS['border'],
+                              highlightcolor=THEME_COLORS['border'])
         camera_card.pack(fill=tk.BOTH, expand=True, pady=(0, COMPONENT_SPACING['card_margin']))
         
         camera_title = tk.Label(camera_card, text="Camera Feed", font=HEADER_FONT,
@@ -58,7 +60,9 @@ class ScannerTab:
         self.video_frame = tk.Label(camera_card, text="Camera not started", 
                                    font=NORMAL_FONT, bg=THEME_COLORS['surface'],
                                    fg=THEME_COLORS['text_secondary'], 
-                                   relief='solid', borderwidth=1)
+                                   relief='solid', borderwidth=1,
+                                   highlightbackground=THEME_COLORS['border'],
+                                   highlightcolor=THEME_COLORS['border'])
         self.video_frame.pack(padx=COMPONENT_SPACING['card_padding'], 
                              pady=(0, COMPONENT_SPACING['card_padding']), 
                              fill=tk.BOTH, expand=True)
@@ -84,7 +88,9 @@ class ScannerTab:
         
         # Last scan section
         last_scan_card = tk.Frame(right_panel, bg=THEME_COLORS['surface'], 
-                                 relief='solid', borderwidth=1)
+                                 relief='solid', borderwidth=1,
+                                 highlightbackground=THEME_COLORS['border'],
+                                 highlightcolor=THEME_COLORS['border'])
         last_scan_card.pack(fill=tk.X, pady=(0, COMPONENT_SPACING['card_margin']))
         
         last_scan_title = tk.Label(last_scan_card, text="Last Scan", font=HEADER_FONT,
@@ -93,7 +99,9 @@ class ScannerTab:
         
         self.last_scan_text = tk.Text(last_scan_card, height=4, wrap=tk.WORD,
                                      font=NORMAL_FONT, bg=THEME_COLORS['surface'],
-                                     fg=THEME_COLORS['text'], relief='solid', borderwidth=1)
+                                     fg=THEME_COLORS['text'], relief='solid', borderwidth=1,
+                                     highlightbackground=THEME_COLORS['border'],
+                                     highlightcolor=THEME_COLORS['border'])
         self.last_scan_text.pack(padx=COMPONENT_SPACING['card_padding'], 
                                 pady=(0, COMPONENT_SPACING['card_padding']), fill=tk.X)
     
