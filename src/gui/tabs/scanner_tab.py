@@ -8,7 +8,7 @@ from typing import Optional, Callable
 
 from ..components import ModernButton
 from ...config.theme import (
-    THEME_COLORS, HEADER_FONT, NORMAL_FONT
+    THEME_COLORS, HEADER_FONT, NORMAL_FONT, COMPONENT_SPACING
 )
 
 
@@ -48,32 +48,35 @@ class ScannerTab:
         # Camera section
         camera_card = tk.Frame(left_panel, bg=THEME_COLORS['surface'], 
                               relief='solid', borderwidth=1)
-        camera_card.pack(fill=tk.BOTH, expand=True, pady=(0, 10))
+        camera_card.pack(fill=tk.BOTH, expand=True, pady=(0, COMPONENT_SPACING['card_margin']))
         
         camera_title = tk.Label(camera_card, text="Camera Feed", font=HEADER_FONT,
                                fg=THEME_COLORS['text'], bg=THEME_COLORS['surface'])
-        camera_title.pack(pady=10)
+        camera_title.pack(pady=COMPONENT_SPACING['header_padding'])
         
         # Video frame
         self.video_frame = tk.Label(camera_card, text="Camera not started", 
                                    font=NORMAL_FONT, bg=THEME_COLORS['surface'],
                                    fg=THEME_COLORS['text_secondary'], 
                                    relief='solid', borderwidth=1)
-        self.video_frame.pack(padx=20, pady=(0, 20), fill=tk.BOTH, expand=True)
+        self.video_frame.pack(padx=COMPONENT_SPACING['card_padding'], 
+                             pady=(0, COMPONENT_SPACING['card_padding']), 
+                             fill=tk.BOTH, expand=True)
         
         # Camera controls
         control_frame = tk.Frame(camera_card, bg=THEME_COLORS['surface'])
-        control_frame.pack(fill=tk.X, padx=20, pady=(0, 20))
+        control_frame.pack(fill=tk.X, padx=COMPONENT_SPACING['card_padding'], 
+                          pady=(0, COMPONENT_SPACING['card_padding']))
         
         self.start_button = ModernButton(control_frame, text="Start Camera", 
-                                        bg=THEME_COLORS['success'], fg='white',
+                                        style='success',
                                         command=self._toggle_camera)
         self.start_button.pack(side=tk.LEFT)
         
         copy_button = ModernButton(control_frame, text="Copy Last Scan", 
-                                  bg=THEME_COLORS['secondary'], fg='white',
+                                  style='secondary',
                                   command=self._copy_last_scan)
-        copy_button.pack(side=tk.LEFT)
+        copy_button.pack(side=tk.LEFT, padx=(COMPONENT_SPACING['button_margin'], 0))
         
         # Right panel - Results
         right_panel = tk.Frame(self.parent, bg=THEME_COLORS['background'])
@@ -82,16 +85,17 @@ class ScannerTab:
         # Last scan section
         last_scan_card = tk.Frame(right_panel, bg=THEME_COLORS['surface'], 
                                  relief='solid', borderwidth=1)
-        last_scan_card.pack(fill=tk.X, pady=(0, 10))
+        last_scan_card.pack(fill=tk.X, pady=(0, COMPONENT_SPACING['card_margin']))
         
         last_scan_title = tk.Label(last_scan_card, text="Last Scan", font=HEADER_FONT,
                                   fg=THEME_COLORS['text'], bg=THEME_COLORS['surface'])
-        last_scan_title.pack(pady=10)
+        last_scan_title.pack(pady=COMPONENT_SPACING['header_padding'])
         
         self.last_scan_text = tk.Text(last_scan_card, height=4, wrap=tk.WORD,
                                      font=NORMAL_FONT, bg=THEME_COLORS['surface'],
                                      fg=THEME_COLORS['text'], relief='solid', borderwidth=1)
-        self.last_scan_text.pack(padx=20, pady=(0, 20), fill=tk.X)
+        self.last_scan_text.pack(padx=COMPONENT_SPACING['card_padding'], 
+                                pady=(0, COMPONENT_SPACING['card_padding']), fill=tk.X)
     
     def _toggle_camera(self):
         """Toggle camera on/off."""
@@ -104,7 +108,7 @@ class ScannerTab:
         """Start the camera."""
         if self.app_manager.start_camera():
             self.is_scanning = True
-            self.start_button.configure(text="Stop Camera", bg=THEME_COLORS['error'])
+            self.start_button.configure(text="Stop Camera", bg=THEME_COLORS['error'], fg='white')
             if self.callbacks.get('update_status'):
                 self.callbacks['update_status']("Camera started")
         else:
@@ -115,7 +119,7 @@ class ScannerTab:
         """Stop the camera."""
         self.app_manager.stop_camera()
         self.is_scanning = False
-        self.start_button.configure(text="Start Camera", bg=THEME_COLORS['success'])
+        self.start_button.configure(text="Start Camera", bg=THEME_COLORS['success'], fg='white')
         if self.callbacks.get('update_status'):
             self.callbacks['update_status']("Camera stopped")
     

@@ -4,8 +4,9 @@ import os
 from datetime import datetime
 from pathlib import Path
 
-from ...config.theme import THEME_COLORS, NORMAL_FONT, HEADER_FONT, SMALL_FONT
+from ...config.theme import THEME_COLORS, NORMAL_FONT, HEADER_FONT, SMALL_FONT, COMPONENT_SPACING, SPACING
 from ...config.paths import LOGS_DIR
+from ...gui.components import ModernButton
 
 
 class LogsTab:
@@ -26,11 +27,12 @@ class LogsTab:
         """Create the logs interface."""
         # Main container
         main_frame = tk.Frame(self.parent, bg=THEME_COLORS['background'])
-        main_frame.pack(fill=tk.BOTH, expand=True, padx=20, pady=20)
+        main_frame.pack(fill=tk.BOTH, expand=True, padx=COMPONENT_SPACING['content_padding'], 
+                       pady=COMPONENT_SPACING['content_padding'])
         
         # Header
         header_frame = tk.Frame(main_frame, bg=THEME_COLORS['background'])
-        header_frame.pack(fill=tk.X, pady=(0, 20))
+        header_frame.pack(fill=tk.X, pady=(0, COMPONENT_SPACING['header_margin']))
         
         title_label = tk.Label(header_frame, text="Application Logs", 
                               font=HEADER_FONT, fg=THEME_COLORS['text'], 
@@ -39,7 +41,7 @@ class LogsTab:
         
         # Controls frame
         controls_frame = tk.Frame(main_frame, bg=THEME_COLORS['background'])
-        controls_frame.pack(fill=tk.X, pady=(0, 10))
+        controls_frame.pack(fill=tk.X, pady=(0, COMPONENT_SPACING['form_section_margin']))
         
         # Log file selection
         file_frame = tk.Frame(controls_frame, bg=THEME_COLORS['background'])
@@ -51,7 +53,7 @@ class LogsTab:
         self.log_file_var = tk.StringVar()
         self.log_file_combo = ttk.Combobox(file_frame, textvariable=self.log_file_var, 
                                           font=NORMAL_FONT, state="readonly", width=30)
-        self.log_file_combo.pack(side=tk.LEFT, padx=(10, 0))
+        self.log_file_combo.pack(side=tk.LEFT, padx=(COMPONENT_SPACING['form_field_margin'], 0))
         self.log_file_combo.bind('<<ComboboxSelected>>', self._on_log_file_selected)
         
         # Filter controls
@@ -64,7 +66,7 @@ class LogsTab:
         self.filter_var = tk.StringVar()
         self.filter_entry = tk.Entry(filter_frame, textvariable=self.filter_var, 
                                    font=NORMAL_FONT, width=20)
-        self.filter_entry.pack(side=tk.LEFT, padx=(10, 5))
+        self.filter_entry.pack(side=tk.LEFT, padx=(COMPONENT_SPACING['form_field_margin'], SPACING['sm']))
         self.filter_entry.bind('<KeyRelease>', self._apply_filter)
         
         # Level filter
@@ -72,40 +74,32 @@ class LogsTab:
         level_combo = ttk.Combobox(filter_frame, textvariable=self.level_var, 
                                   values=["ALL", "DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
                                   font=SMALL_FONT, state="readonly", width=10)
-        level_combo.pack(side=tk.LEFT, padx=(5, 0))
+        level_combo.pack(side=tk.LEFT, padx=(SPACING['sm'], 0))
         level_combo.bind('<<ComboboxSelected>>', self._apply_filter)
         
         # Buttons frame
         buttons_frame = tk.Frame(main_frame, bg=THEME_COLORS['background'])
-        buttons_frame.pack(fill=tk.X, pady=(0, 10))
+        buttons_frame.pack(fill=tk.X, pady=(0, COMPONENT_SPACING['form_section_margin']))
         
-        # Action buttons
-        self.refresh_button = tk.Button(buttons_frame, text="Refresh", 
-                                      command=self._refresh_logs,
-                                      font=NORMAL_FONT, bg=THEME_COLORS['primary'],
-                                      fg=THEME_COLORS['primary_text'], relief='flat',
-                                      padx=15, pady=5, cursor='hand2')
-        self.refresh_button.pack(side=tk.LEFT, padx=(0, 10))
+                # Action buttons
+        self.refresh_button = ModernButton(buttons_frame, text="Refresh", 
+                                         command=self._refresh_logs,
+                                         style='primary')
+        self.refresh_button.pack(side=tk.LEFT, padx=(0, COMPONENT_SPACING['button_margin']))
         
-        self.clear_button = tk.Button(buttons_frame, text="Clear Filter", 
-                                    command=self._clear_filter,
-                                    font=NORMAL_FONT, bg=THEME_COLORS['secondary'],
-                                    fg=THEME_COLORS['primary_text'], relief='flat',
-                                    padx=15, pady=5, cursor='hand2')
-        self.clear_button.pack(side=tk.LEFT, padx=(0, 10))
+        self.clear_button = ModernButton(buttons_frame, text="Clear Filter", 
+                                       command=self._clear_filter,
+                                       style='secondary')
+        self.clear_button.pack(side=tk.LEFT, padx=(0, COMPONENT_SPACING['button_margin']))
         
-        self.export_button = tk.Button(buttons_frame, text="Export Logs", 
-                                     command=self._export_logs,
-                                     font=NORMAL_FONT, bg=THEME_COLORS['success'],
-                                     fg='white', relief='flat',
-                                     padx=15, pady=5, cursor='hand2')
-        self.export_button.pack(side=tk.LEFT, padx=(0, 10))
+        self.export_button = ModernButton(buttons_frame, text="Export Logs", 
+                                        command=self._export_logs,
+                                        style='success')
+        self.export_button.pack(side=tk.LEFT, padx=(0, COMPONENT_SPACING['button_margin']))
         
-        self.open_folder_button = tk.Button(buttons_frame, text="Open Logs Folder", 
-                                          command=self._open_logs_folder,
-                                          font=NORMAL_FONT, bg=THEME_COLORS['info'],
-                                          fg='white', relief='flat',
-                                          padx=15, pady=5, cursor='hand2')
+        self.open_folder_button = ModernButton(buttons_frame, text="Open Logs Folder", 
+                                             command=self._open_logs_folder,
+                                             style='info')
         self.open_folder_button.pack(side=tk.LEFT)
         
         # Status frame

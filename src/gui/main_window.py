@@ -16,7 +16,7 @@ from .components import (
 from .tabs import LogsTab
 from ..config.theme import (
     THEME_COLORS, TITLE_FONT, HEADER_FONT, NORMAL_FONT, SMALL_FONT,
-    BUTTON_PADDING, SECTION_PADDING
+    COMPONENT_SPACING
 )
 from ..config.settings import (
     WINDOW_TITLE, WINDOW_SIZE,
@@ -90,19 +90,19 @@ class MainWindow:
                        background=THEME_COLORS['primary'],
                        foreground='white',
                        font=NORMAL_FONT,
-                       padding=(15, 8))
+                       padding=(COMPONENT_SPACING['button_padding_x'], COMPONENT_SPACING['button_padding_y']))
         
         style.configure('Success.TButton', 
                        background=THEME_COLORS['success'],
                        foreground='white',
                        font=NORMAL_FONT,
-                       padding=(15, 8))
+                       padding=(COMPONENT_SPACING['button_padding_x'], COMPONENT_SPACING['button_padding_y']))
         
         style.configure('Warning.TButton', 
                        background=THEME_COLORS['warning'],
                        foreground='white',
                        font=NORMAL_FONT,
-                       padding=(15, 8))
+                       padding=(COMPONENT_SPACING['button_padding_x'], COMPONENT_SPACING['button_padding_y']))
         
         # Configure treeview styles
         style.configure('Treeview', 
@@ -131,7 +131,9 @@ class MainWindow:
         
         # Main container with responsive behavior
         self.main_container = ResponsiveFrame(self.root, bg=THEME_COLORS['background'])
-        self.main_container.grid(row=0, column=0, sticky='nsew', padx=20, pady=20)
+        self.main_container.grid(row=0, column=0, sticky='nsew', 
+                                padx=COMPONENT_SPACING['content_padding'], 
+                                pady=COMPONENT_SPACING['content_padding'])
         self.main_container.grid_rowconfigure(1, weight=1)
         self.main_container.grid_columnconfigure(0, weight=1)
         
@@ -249,7 +251,7 @@ Keyboard Shortcuts:
     def _create_header_section(self, parent):
         """Create the header section with title and stats."""
         header_frame = tk.Frame(parent, bg=THEME_COLORS['background'])
-        header_frame.grid(row=0, column=0, sticky='ew', pady=(0, 20))
+        header_frame.grid(row=0, column=0, sticky='ew', pady=(0, COMPONENT_SPACING['header_margin']))
         
         # Title
         title_label = tk.Label(header_frame, text="QR Code Scanner", 
@@ -264,11 +266,11 @@ Keyboard Shortcuts:
         self.scan_count_label = tk.Label(stats_frame, text="Scans: 0", 
                                         font=SMALL_FONT, fg=THEME_COLORS['text_secondary'], 
                                         bg=THEME_COLORS['background'])
-        self.scan_count_label.pack(side=tk.LEFT, padx=(0, 20))
+        self.scan_count_label.pack(side=tk.LEFT, padx=(0, COMPONENT_SPACING['status_margin']))
         
         # Camera status
         self.camera_status = StatusIndicator(stats_frame, "Camera: Ready", "neutral")
-        self.camera_status.pack(side=tk.LEFT, padx=(0, 20))
+        self.camera_status.pack(side=tk.LEFT, padx=(0, COMPONENT_SPACING['status_margin']))
         
         # Sheets status
         self.sheets_status_indicator = StatusIndicator(stats_frame, "Sheets: Disconnected", "error")
@@ -278,7 +280,7 @@ Keyboard Shortcuts:
         """Create the main content area with video and controls."""
         # Create notebook for tabs
         self.notebook = ttk.Notebook(parent)
-        self.notebook.grid(row=1, column=0, sticky='nsew', pady=(0, 10))
+        self.notebook.grid(row=1, column=0, sticky='nsew', pady=(0, COMPONENT_SPACING['tab_content_margin']))
         
         # Scanner tab
         scanner_frame = tk.Frame(self.notebook, bg=THEME_COLORS['background'])
@@ -304,23 +306,25 @@ Keyboard Shortcuts:
         """Create the scanner tab with video and controls."""
         # Left panel - Video
         left_panel = tk.Frame(parent, bg=THEME_COLORS['background'])
-        left_panel.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=(0, 10))
+        left_panel.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=(0, COMPONENT_SPACING['card_margin']))
         
         # Video section
         video_card = tk.Frame(left_panel, bg=THEME_COLORS['surface'], 
                              relief='solid', borderwidth=1)
-        video_card.pack(fill=tk.BOTH, expand=True, pady=(0, 10))
+        video_card.pack(fill=tk.BOTH, expand=True, pady=(0, COMPONENT_SPACING['card_margin']))
         
         # Video title
         video_title = tk.Label(video_card, text="Camera Feed", font=HEADER_FONT,
                               fg=THEME_COLORS['text'], bg=THEME_COLORS['surface'])
-        video_title.pack(pady=10)
+        video_title.pack(pady=COMPONENT_SPACING['header_padding'])
         
         # Video frame
         self.video_frame = tk.Label(video_card, text="Click 'Start Camera' to begin scanning",
                                    font=NORMAL_FONT, fg=THEME_COLORS['text_secondary'],
                                    bg=THEME_COLORS['surface'], relief='solid', borderwidth=1)
-        self.video_frame.pack(padx=20, pady=(0, 20), fill=tk.BOTH, expand=True)
+        self.video_frame.pack(padx=COMPONENT_SPACING['video_padding'], 
+                             pady=(0, COMPONENT_SPACING['video_padding']), 
+                             fill=tk.BOTH, expand=True)
         
         # Control buttons
         control_frame = tk.Frame(left_panel, bg=THEME_COLORS['background'])
@@ -330,13 +334,13 @@ Keyboard Shortcuts:
                                         bg=THEME_COLORS['primary'], fg='white',
                                         command=self._toggle_camera,
                                         tooltip="Start or stop the camera for QR code scanning (Ctrl+S)")
-        self.start_button.pack(side=tk.LEFT, padx=(0, 10))
+        self.start_button.pack(side=tk.LEFT, padx=(0, COMPONENT_SPACING['button_margin']))
         
         clear_button = ModernButton(control_frame, text="Clear History", 
                                    bg=THEME_COLORS['warning'], fg='white',
                                    command=self._clear_history,
                                    tooltip="Clear all scan history (Ctrl+H)")
-        clear_button.pack(side=tk.LEFT, padx=(0, 10))
+        clear_button.pack(side=tk.LEFT, padx=(0, COMPONENT_SPACING['button_margin']))
         
         copy_button = ModernButton(control_frame, text="Copy Last Scan", 
                                   bg=THEME_COLORS['secondary'], fg='white',
@@ -548,13 +552,14 @@ Keyboard Shortcuts:
         """Create the status bar at the bottom."""
         self.status_bar = tk.Frame(parent, bg=THEME_COLORS['surface'], 
                                   relief='solid', borderwidth=1, height=30)
-        self.status_bar.grid(row=2, column=0, sticky='ew', pady=(10, 0))
+        self.status_bar.grid(row=2, column=0, sticky='ew', pady=(COMPONENT_SPACING['status_margin'], 0))
         self.status_bar.grid_propagate(False)
         
         self.status_label = tk.Label(self.status_bar, text="Ready", 
                                     font=SMALL_FONT, fg=THEME_COLORS['text_secondary'],
                                     bg=THEME_COLORS['surface'])
-        self.status_label.pack(side=tk.LEFT, padx=10, pady=5)
+        self.status_label.pack(side=tk.LEFT, padx=COMPONENT_SPACING['status_padding'], 
+                              pady=COMPONENT_SPACING['status_padding'])
     
     def update_status(self, message):
         """Update the status bar message."""

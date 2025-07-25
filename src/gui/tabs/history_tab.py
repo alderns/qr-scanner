@@ -8,7 +8,7 @@ from typing import Optional, List, Tuple
 
 from ..components import ModernButton
 from ...config.theme import (
-    THEME_COLORS, HEADER_FONT, NORMAL_FONT
+    THEME_COLORS, HEADER_FONT, NORMAL_FONT, COMPONENT_SPACING
 )
 
 
@@ -41,30 +41,32 @@ class HistoryTab:
         # History section
         history_card = tk.Frame(self.parent, bg=THEME_COLORS['surface'], 
                                relief='solid', borderwidth=1)
-        history_card.pack(fill=tk.BOTH, expand=True, pady=10)
+        history_card.pack(fill=tk.BOTH, expand=True, pady=COMPONENT_SPACING['card_margin'])
         
         history_title = tk.Label(history_card, text="Scan History", 
                                 font=HEADER_FONT, fg=THEME_COLORS['text'], 
                                 bg=THEME_COLORS['surface'])
-        history_title.pack(pady=10)
+        history_title.pack(pady=COMPONENT_SPACING['header_padding'])
         
         # History controls
         history_controls = tk.Frame(history_card, bg=THEME_COLORS['surface'])
-        history_controls.pack(fill=tk.X, padx=20, pady=(0, 10))
+        history_controls.pack(fill=tk.X, padx=COMPONENT_SPACING['card_padding'], 
+                             pady=(0, COMPONENT_SPACING['card_padding']))
         
         export_button = ModernButton(history_controls, text="Export History", 
-                                    bg=THEME_COLORS['primary'], fg='white',
+                                    style='primary',
                                     command=self._export_history)
         export_button.pack(side=tk.LEFT)
         
         clear_history_button = ModernButton(history_controls, text="Clear History", 
-                                           bg=THEME_COLORS['warning'], fg='white',
+                                           style='warning',
                                            command=self._clear_history)
-        clear_history_button.pack(side=tk.LEFT, padx=(10, 0))
+        clear_history_button.pack(side=tk.LEFT, padx=(COMPONENT_SPACING['button_margin'], 0))
         
         # History treeview
         tree_frame = tk.Frame(history_card, bg=THEME_COLORS['surface'])
-        tree_frame.pack(fill=tk.BOTH, expand=True, padx=20, pady=(0, 20))
+        tree_frame.pack(fill=tk.BOTH, expand=True, padx=COMPONENT_SPACING['card_padding'], 
+                       pady=(0, COMPONENT_SPACING['card_padding']))
         
         # Create treeview for history
         columns = ('Time', 'ID Number', 'Name', 'Status', 'Type')

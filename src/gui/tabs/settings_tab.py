@@ -8,7 +8,7 @@ from typing import Optional
 
 from ..components import ModernButton, StatusIndicator
 from ...config.theme import (
-    THEME_COLORS, HEADER_FONT, NORMAL_FONT
+    THEME_COLORS, HEADER_FONT, NORMAL_FONT, COMPONENT_SPACING
 )
 from ...config.settings import (
     DEFAULT_SPREADSHEET_ID, DEFAULT_SHEET_NAME
@@ -50,42 +50,44 @@ class SettingsTab:
         # Google Sheets section
         sheets_card = tk.Frame(self.parent, bg=THEME_COLORS['surface'], 
                               relief='solid', borderwidth=1)
-        sheets_card.pack(fill=tk.X, pady=10)
+        sheets_card.pack(fill=tk.X, pady=COMPONENT_SPACING['card_margin'])
         
         sheets_title = tk.Label(sheets_card, text="Google Sheets Integration", 
                                font=HEADER_FONT, fg=THEME_COLORS['text'], 
                                bg=THEME_COLORS['surface'])
-        sheets_title.pack(pady=10)
+        sheets_title.pack(pady=COMPONENT_SPACING['header_padding'])
         
         # Credentials section
         cred_frame = tk.Frame(sheets_card, bg=THEME_COLORS['surface'])
-        cred_frame.pack(fill=tk.X, padx=20, pady=(0, 20))
+        cred_frame.pack(fill=tk.X, padx=COMPONENT_SPACING['card_padding'], 
+                       pady=(0, COMPONENT_SPACING['card_padding']))
         
         cred_label = tk.Label(cred_frame, text="API Credentials:", font=NORMAL_FONT,
                              fg=THEME_COLORS['text'], bg=THEME_COLORS['surface'])
-        cred_label.pack(anchor=tk.W, pady=(0, 5))
+        cred_label.pack(anchor=tk.W, pady=(0, COMPONENT_SPACING['form_label_margin']))
         
         self.credentials_status = StatusIndicator(cred_frame, "Checking credentials...", "neutral")
         self.credentials_status.pack(anchor=tk.W)
         
         # Manual setup button (only shown if auto-setup fails)
         self.credentials_button = ModernButton(cred_frame, text="Setup Credentials Manually", 
-                                              bg=THEME_COLORS['warning'], fg='white',
+                                              style='warning',
                                               command=self._setup_credentials)
-        self.credentials_button.pack(anchor=tk.W, pady=(5, 0))
+        self.credentials_button.pack(anchor=tk.W, pady=(COMPONENT_SPACING['form_field_margin'], 0))
         self.credentials_button.pack_forget()  # Hide by default
         
         # Connection section
         conn_frame = tk.Frame(sheets_card, bg=THEME_COLORS['surface'])
-        conn_frame.pack(fill=tk.X, padx=20, pady=(0, 20))
+        conn_frame.pack(fill=tk.X, padx=COMPONENT_SPACING['card_padding'], 
+                       pady=(0, COMPONENT_SPACING['card_padding']))
         
         conn_label = tk.Label(conn_frame, text="Spreadsheet Connection:", font=NORMAL_FONT,
                              fg=THEME_COLORS['text'], bg=THEME_COLORS['surface'])
-        conn_label.pack(anchor=tk.W, pady=(0, 10))
+        conn_label.pack(anchor=tk.W, pady=(0, COMPONENT_SPACING['form_section_margin']))
         
         # Spreadsheet ID
         id_frame = tk.Frame(conn_frame, bg=THEME_COLORS['surface'])
-        id_frame.pack(fill=tk.X, pady=(0, 10))
+        id_frame.pack(fill=tk.X, pady=(0, COMPONENT_SPACING['form_field_margin']))
         
         tk.Label(id_frame, text="Spreadsheet ID:", font=NORMAL_FONT,
                 fg=THEME_COLORS['text'], bg=THEME_COLORS['surface']).pack(anchor=tk.W)
@@ -93,11 +95,11 @@ class SettingsTab:
                                          bg=THEME_COLORS['surface'], fg=THEME_COLORS['text'],
                                          relief='solid', borderwidth=1)
         self.spreadsheet_entry.insert(0, DEFAULT_SPREADSHEET_ID)
-        self.spreadsheet_entry.pack(fill=tk.X, pady=(5, 0))
+        self.spreadsheet_entry.pack(fill=tk.X, pady=(COMPONENT_SPACING['entry_margin'], 0))
         
         # Sheet name
         sheet_frame = tk.Frame(conn_frame, bg=THEME_COLORS['surface'])
-        sheet_frame.pack(fill=tk.X, pady=(0, 10))
+        sheet_frame.pack(fill=tk.X, pady=(0, COMPONENT_SPACING['form_field_margin']))
         
         tk.Label(sheet_frame, text="Sheet Name:", font=NORMAL_FONT,
                 fg=THEME_COLORS['text'], bg=THEME_COLORS['surface']).pack(anchor=tk.W)
@@ -105,31 +107,32 @@ class SettingsTab:
                                         bg=THEME_COLORS['surface'], fg=THEME_COLORS['text'],
                                         relief='solid', borderwidth=1)
         self.sheet_name_entry.insert(0, DEFAULT_SHEET_NAME)
-        self.sheet_name_entry.pack(fill=tk.X, pady=(5, 0))
+        self.sheet_name_entry.pack(fill=tk.X, pady=(COMPONENT_SPACING['entry_margin'], 0))
         
         # Connect button
         self.connect_button = ModernButton(conn_frame, text="Connect to Sheets", 
-                                          bg=THEME_COLORS['success'], fg='white',
+                                          style='success',
                                           command=self._connect_to_sheets)
-        self.connect_button.pack(anchor=tk.W, pady=(10, 0))
+        self.connect_button.pack(anchor=tk.W, pady=(COMPONENT_SPACING['form_section_margin'], 0))
         
         # Connection status
         self.sheets_status = StatusIndicator(sheets_card, "Not connected to Google Sheets", "error")
-        self.sheets_status.pack(pady=(0, 20))
+        self.sheets_status.pack(pady=(0, COMPONENT_SPACING['card_padding']))
         
         # Master List section
         master_list_card = tk.Frame(self.parent, bg=THEME_COLORS['surface'], 
                                    relief='solid', borderwidth=1)
-        master_list_card.pack(fill=tk.X, pady=10)
+        master_list_card.pack(fill=tk.X, pady=COMPONENT_SPACING['card_margin'])
         
         master_list_title = tk.Label(master_list_card, text="Master List Management", 
                                     font=HEADER_FONT, fg=THEME_COLORS['text'], 
                                     bg=THEME_COLORS['surface'])
-        master_list_title.pack(pady=10)
+        master_list_title.pack(pady=COMPONENT_SPACING['header_padding'])
         
         # Master list controls
         ml_controls = tk.Frame(master_list_card, bg=THEME_COLORS['surface'])
-        ml_controls.pack(fill=tk.X, padx=20, pady=(0, 10))
+        ml_controls.pack(fill=tk.X, padx=COMPONENT_SPACING['card_padding'], 
+                        pady=(0, COMPONENT_SPACING['card_padding']))
         
         self.auto_load_var = tk.BooleanVar(value=True)
         auto_load_check = tk.Checkbutton(ml_controls, text="Auto-load Master List", 
@@ -140,14 +143,14 @@ class SettingsTab:
         auto_load_check.pack(side=tk.LEFT)
         
         load_button = ModernButton(ml_controls, text="Load Master List", 
-                                  bg=THEME_COLORS['secondary'], fg='white',
+                                  style='secondary',
                                   command=self._load_master_list)
         load_button.pack(side=tk.RIGHT)
         
         debug_button = ModernButton(ml_controls, text="Debug Structure", 
-                                   bg=THEME_COLORS['warning'], fg='white',
+                                   style='warning',
                                    command=self._debug_master_list)
-        debug_button.pack(side=tk.RIGHT, padx=(10, 0))
+        debug_button.pack(side=tk.RIGHT, padx=(COMPONENT_SPACING['button_margin'], 0))
         
         # Master list status
         self.master_list_status = StatusIndicator(master_list_card, "Not loaded", "neutral")

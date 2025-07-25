@@ -8,7 +8,7 @@ from tkinter import ttk
 import threading
 import time
 from typing import Optional, Callable, Any
-from ..config.theme import THEME_COLORS, NORMAL_FONT, SMALL_FONT, BUTTON_PADDING
+from ..config.theme import THEME_COLORS, NORMAL_FONT, SMALL_FONT, COMPONENT_SPACING, BUTTON_STYLES
 
 
 class Tooltip:
@@ -86,7 +86,14 @@ class Tooltip:
 class ModernButton(tk.Button):
     """Enhanced modern button with accessibility, tooltips, and performance optimizations."""
     
-    def __init__(self, parent, text="", tooltip="", command=None, **kwargs):
+    def __init__(self, parent, text="", tooltip="", command=None, style=None, **kwargs):
+        # Check if a predefined style is requested
+        if style and style in BUTTON_STYLES:
+            style_config = BUTTON_STYLES[style].copy()
+            # Override with any custom kwargs
+            style_config.update(kwargs)
+            kwargs = style_config
+        
         # Store the original background color
         self.original_bg = kwargs.get('bg', THEME_COLORS['surface'])
         self.original_fg = kwargs.get('fg', THEME_COLORS['text'])
@@ -99,8 +106,8 @@ class ModernButton(tk.Button):
         self.configure(
             relief=tk.FLAT,
             borderwidth=0,
-            padx=BUTTON_PADDING,
-            pady=8,
+            padx=COMPONENT_SPACING['button_padding_x'],
+            pady=COMPONENT_SPACING['button_padding_y'],
             font=NORMAL_FONT,
             cursor='hand2',
             bg=self.original_bg,
@@ -174,7 +181,7 @@ class ModernButton(tk.Button):
     
     def _on_focus_in(self, event):
         """Handle focus in for accessibility."""
-        self.configure(relief=tk.RAISED, borderwidth=2)
+        self.configure(relief=tk.RAISED, borderwidth=0)
     
     def _on_focus_out(self, event):
         """Handle focus out for accessibility."""
