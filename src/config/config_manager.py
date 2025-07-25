@@ -1,265 +1,503 @@
 """
-Configuration manager for the QR Scanner application.
+Configuration manager for centralized application configuration.
 """
 
 import json
 import os
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Dict, Any, Optional, Union
 from dataclasses import dataclass, asdict
+from datetime import datetime
 
-from .settings import *
-from .paths import SETTINGS_FILE, ensure_directories
 from ..utils.logger import LoggerMixin, get_logger
+from ..utils.exceptions import ConfigurationError
+from .paths import APP_DATA_DIR, ensure_directories
+from .settings import *
 
 logger = get_logger(__name__)
 
 
 @dataclass
-class AppConfig:
-    """Application configuration data class."""
+class GoogleSheetsConfig:
+    """Google Sheets configuration."""
+    spreadsheet_id: str = DEFAULT_SPREADSHEET_ID
+    sheet_name: str = DEFAULT_SHEET_NAME
+    master_list_sheet: str = MASTER_LIST_SHEET
+    credentials_file: str = CREDENTIALS_FILE
+    token_file: str = TOKEN_FILE
+    scopes: list = None
     
-    # Window settings
-    window_title: str = WINDOW_TITLE
-    window_size: str = WINDOW_SIZE
-    min_window_size: str = MIN_WINDOW_SIZE
-    
-    # Camera settings
+    def __post_init__(self):
+        if self.scopes is None:
+            self.scopes = SCOPES.copy()
+
+
+@dataclass
+class CameraConfig:
+    """Camera configuration."""
     camera_index: int = CAMERA_INDEX
     scan_delay: float = SCAN_DELAY
-    camera_resolution: tuple = CAMERA_RESOLUTION
-    camera_fps: int = CAMERA_FPS
-    
-    # Google Sheets settings
-    default_spreadsheet_id: str = DEFAULT_SPREADSHEET_ID
-    default_sheet_name: str = DEFAULT_SHEET_NAME
-    master_list_sheet: str = MASTER_LIST_SHEET
-    
-    # Auto-save settings
-    auto_save_interval: int = AUTO_SAVE_INTERVAL
-    max_history_items: int = MAX_HISTORY_ITEMS
-    
-    # Logging settings
-    log_level: str = LOG_LEVEL
-    log_format: str = LOG_FORMAT
-    
-    # Performance settings
+    resolution: tuple = CAMERA_RESOLUTION
+    fps: int = CAMERA_FPS
+    auto_start: bool = False
+
+
+@dataclass
+class WindowConfig:
+    """Window configuration."""
+    title: str = WINDOW_TITLE
+    size: str = WINDOW_SIZE
+    min_size: str = MIN_WINDOW_SIZE
+    theme: str = "default"
+    auto_save_position: bool = True
+    remember_size: bool = True
+
+
+@dataclass
+class PerformanceConfig:
+    """Performance configuration."""
     thread_pool_size: int = THREAD_POOL_SIZE
     max_concurrent_scans: int = MAX_CONCURRENT_SCANS
     cache_size: int = CACHE_SIZE
+    auto_save_interval: int = AUTO_SAVE_INTERVAL
+    max_history_items: int = MAX_HISTORY_ITEMS
+    enable_performance_monitoring: bool = True
+
+
+@dataclass
+class LoggingConfig:
+    """Logging configuration."""
+    level: str = LOG_LEVEL
+    format: str = LOG_FORMAT
+    file: str = LOG_FILE
+    max_file_size: int = 10 * 1024 * 1024  # 10MB
+    backup_count: int = 5
+    enable_console_logging: bool = True
+    enable_file_logging: bool = True
+
+
+@dataclass
+class ApplicationConfig:
+    """Complete application configuration."""
+    app_name: str = APP_NAME
+    app_version: str = APP_VERSION
+    app_description: str = APP_DESCRIPTION
+    
+    # Sub-configurations
+    google_sheets: GoogleSheetsConfig = None
+    camera: CameraConfig = None
+    window: WindowConfig = None
+    performance: PerformanceConfig = None
+    logging: LoggingConfig = None
+    
+    # User preferences
+    auto_save_enabled: bool = True
+    clipboard_integration: bool = True
+    notifications_enabled: bool = True
+    dark_mode: bool = False
+    
+    def __post_init__(self):
+        if self.google_sheets is None:
+            self.google_sheets = GoogleSheetsConfig()
+        if self.camera is None:
+            self.camera = CameraConfig()
+        if self.window is None:
+            self.window = WindowConfig()
+        if self.performance is None:
+            self.performance = PerformanceConfig()
+        if self.logging is None:
+            self.logging = LoggingConfig()
 
 
 class ConfigManager(LoggerMixin):
-    """Manages application configuration and settings."""
+    """
+    Centralized configuration manager for the QR Scanner application.
     
-    def __init__(self):
-        """Initialize the configuration manager."""
+    This class provides a unified interface for managing all application
+    configuration, including default values, user preferences, and
+    configuration persistence.
+    """
+    
+    def __init__(self, config_file: Optional[str] = None):
+        """
+        Initialize the configuration manager.
+        
+        Args:
+            config_file: Optional path to configuration file
+        """
         super().__init__()
-        self.config = AppConfig()
-        self.user_settings: Dict[str, Any] = {}
-        self._load_user_settings()
-    
-    def _load_user_settings(self):
-        """Load user-specific settings from file."""
-        try:
-            ensure_directories()
-            
-            if SETTINGS_FILE.exists():
-                with open(SETTINGS_FILE, 'r', encoding='utf-8') as f:
-                    self.user_settings = json.load(f)
-                self.log_info("User settings loaded successfully")
-            else:
-                self.user_settings = {}
-                self.log_info("No user settings file found, using defaults")
-                
-        except Exception as e:
-            self.log_error(f"Error loading user settings: {str(e)}")
-            self.user_settings = {}
-    
-    def _save_user_settings(self):
-        """Save user-specific settings to file."""
-        try:
-            ensure_directories()
-            
-            with open(SETTINGS_FILE, 'w', encoding='utf-8') as f:
-                json.dump(self.user_settings, f, indent=2, ensure_ascii=False)
-            
-            self.log_info("User settings saved successfully")
-            
-        except Exception as e:
-            self.log_error(f"Error saving user settings: {str(e)}")
-    
-    def get(self, key: str, default: Any = None) -> Any:
-        """
-        Get a configuration value.
         
-        Args:
-            key: Configuration key
-            default: Default value if key not found
-            
+        ensure_directories()
+        
+        self.config_file = config_file or (APP_DATA_DIR / "user_config.json")
+        self.config = ApplicationConfig()
+        self._load_config()
+        
+        self.log_info("Configuration manager initialized")
+    
+    def get_config(self) -> ApplicationConfig:
+        """
+        Get the current configuration.
+        
         Returns:
-            Configuration value
+            Current application configuration
         """
-        # Check user settings first
-        if key in self.user_settings:
-            return self.user_settings[key]
-        
-        # Check default config
-        if hasattr(self.config, key):
-            return getattr(self.config, key)
-        
-        return default
+        return self.config
     
-    def set(self, key: str, value: Any):
-        """
-        Set a configuration value.
-        
-        Args:
-            key: Configuration key
-            value: Configuration value
-        """
-        try:
-            self.user_settings[key] = value
-            self._save_user_settings()
-            self.log_info(f"Configuration updated: {key} = {value}")
-            
-        except Exception as e:
-            self.log_error(f"Error setting configuration: {str(e)}")
-    
-    def get_google_sheets_config(self) -> Dict[str, str]:
+    def get_google_sheets_config(self) -> GoogleSheetsConfig:
         """Get Google Sheets configuration."""
-        return {
-            'spreadsheet_id': self.get('default_spreadsheet_id', DEFAULT_SPREADSHEET_ID),
-            'sheet_name': self.get('default_sheet_name', DEFAULT_SHEET_NAME),
-            'master_list_sheet': self.get('master_list_sheet', MASTER_LIST_SHEET)
-        }
+        return self.config.google_sheets
     
-    def set_google_sheets_config(self, spreadsheet_id: str, sheet_name: str, master_list_sheet: str = None):
-        """Set Google Sheets configuration."""
-        self.set('default_spreadsheet_id', spreadsheet_id)
-        self.set('default_sheet_name', sheet_name)
-        if master_list_sheet:
-            self.set('master_list_sheet', master_list_sheet)
-    
-    def get_camera_config(self) -> Dict[str, Any]:
+    def get_camera_config(self) -> CameraConfig:
         """Get camera configuration."""
-        return {
-            'camera_index': self.get('camera_index', CAMERA_INDEX),
-            'scan_delay': self.get('scan_delay', SCAN_DELAY),
-            'camera_resolution': self.get('camera_resolution', CAMERA_RESOLUTION),
-            'camera_fps': self.get('camera_fps', CAMERA_FPS)
-        }
+        return self.config.camera
     
-    def set_camera_config(self, camera_index: int = None, scan_delay: float = None, 
-                         camera_resolution: tuple = None, camera_fps: int = None):
-        """Set camera configuration."""
-        if camera_index is not None:
-            self.set('camera_index', camera_index)
-        if scan_delay is not None:
-            self.set('scan_delay', scan_delay)
-        if camera_resolution is not None:
-            self.set('camera_resolution', camera_resolution)
-        if camera_fps is not None:
-            self.set('camera_fps', camera_fps)
-    
-    def get_window_config(self) -> Dict[str, str]:
+    def get_window_config(self) -> WindowConfig:
         """Get window configuration."""
-        return {
-            'window_title': self.get('window_title', WINDOW_TITLE),
-            'window_size': self.get('window_size', WINDOW_SIZE),
-            'min_window_size': self.get('min_window_size', MIN_WINDOW_SIZE)
-        }
+        return self.config.window
     
-    def set_window_config(self, window_title: str = None, window_size: str = None, 
-                         min_window_size: str = None):
-        """Set window configuration."""
-        if window_title is not None:
-            self.set('window_title', window_title)
-        if window_size is not None:
-            self.set('window_size', window_size)
-        if min_window_size is not None:
-            self.set('min_window_size', min_window_size)
-    
-    def get_performance_config(self) -> Dict[str, int]:
+    def get_performance_config(self) -> PerformanceConfig:
         """Get performance configuration."""
-        return {
-            'thread_pool_size': self.get('thread_pool_size', THREAD_POOL_SIZE),
-            'max_concurrent_scans': self.get('max_concurrent_scans', MAX_CONCURRENT_SCANS),
-            'cache_size': self.get('cache_size', CACHE_SIZE),
-            'max_history_items': self.get('max_history_items', MAX_HISTORY_ITEMS)
-        }
+        return self.config.performance
     
-    def set_performance_config(self, thread_pool_size: int = None, max_concurrent_scans: int = None,
-                              cache_size: int = None, max_history_items: int = None):
-        """Set performance configuration."""
-        if thread_pool_size is not None:
-            self.set('thread_pool_size', thread_pool_size)
-        if max_concurrent_scans is not None:
-            self.set('max_concurrent_scans', max_concurrent_scans)
-        if cache_size is not None:
-            self.set('cache_size', cache_size)
-        if max_history_items is not None:
-            self.set('max_history_items', max_history_items)
+    def get_logging_config(self) -> LoggingConfig:
+        """Get logging configuration."""
+        return self.config.logging
     
-    def reset_to_defaults(self):
-        """Reset all user settings to defaults."""
-        try:
-            self.user_settings.clear()
-            self._save_user_settings()
-            self.log_info("Configuration reset to defaults")
-            
-        except Exception as e:
-            self.log_error(f"Error resetting configuration: {str(e)}")
-    
-    def export_config(self, filepath: Path) -> bool:
+    def update_google_sheets_config(self, **kwargs) -> bool:
         """
-        Export configuration to file.
+        Update Google Sheets configuration.
         
         Args:
-            filepath: Path to export file
+            **kwargs: Configuration parameters to update
             
         Returns:
             True if successful, False otherwise
         """
         try:
-            export_data = {
-                'user_settings': self.user_settings,
-                'default_config': asdict(self.config)
-            }
+            for key, value in kwargs.items():
+                if hasattr(self.config.google_sheets, key):
+                    setattr(self.config.google_sheets, key, value)
+                else:
+                    self.log_warning(f"Unknown Google Sheets config key: {key}")
             
-            with open(filepath, 'w', encoding='utf-8') as f:
-                json.dump(export_data, f, indent=2, ensure_ascii=False)
+            self._save_config()
+            self.log_info("Google Sheets configuration updated")
+            return True
             
-            self.log_info(f"Configuration exported to {filepath}")
+        except Exception as e:
+            self.log_error(f"Error updating Google Sheets config: {str(e)}")
+            return False
+    
+    def update_camera_config(self, **kwargs) -> bool:
+        """
+        Update camera configuration.
+        
+        Args:
+            **kwargs: Configuration parameters to update
+            
+        Returns:
+            True if successful, False otherwise
+        """
+        try:
+            for key, value in kwargs.items():
+                if hasattr(self.config.camera, key):
+                    setattr(self.config.camera, key, value)
+                else:
+                    self.log_warning(f"Unknown camera config key: {key}")
+            
+            self._save_config()
+            self.log_info("Camera configuration updated")
+            return True
+            
+        except Exception as e:
+            self.log_error(f"Error updating camera config: {str(e)}")
+            return False
+    
+    def update_window_config(self, **kwargs) -> bool:
+        """
+        Update window configuration.
+        
+        Args:
+            **kwargs: Configuration parameters to update
+            
+        Returns:
+            True if successful, False otherwise
+        """
+        try:
+            for key, value in kwargs.items():
+                if hasattr(self.config.window, key):
+                    setattr(self.config.window, key, value)
+                else:
+                    self.log_warning(f"Unknown window config key: {key}")
+            
+            self._save_config()
+            self.log_info("Window configuration updated")
+            return True
+            
+        except Exception as e:
+            self.log_error(f"Error updating window config: {str(e)}")
+            return False
+    
+    def update_performance_config(self, **kwargs) -> bool:
+        """
+        Update performance configuration.
+        
+        Args:
+            **kwargs: Configuration parameters to update
+            
+        Returns:
+            True if successful, False otherwise
+        """
+        try:
+            for key, value in kwargs.items():
+                if hasattr(self.config.performance, key):
+                    setattr(self.config.performance, key, value)
+                else:
+                    self.log_warning(f"Unknown performance config key: {key}")
+            
+            self._save_config()
+            self.log_info("Performance configuration updated")
+            return True
+            
+        except Exception as e:
+            self.log_error(f"Error updating performance config: {str(e)}")
+            return False
+    
+    def update_logging_config(self, **kwargs) -> bool:
+        """
+        Update logging configuration.
+        
+        Args:
+            **kwargs: Configuration parameters to update
+            
+        Returns:
+            True if successful, False otherwise
+        """
+        try:
+            for key, value in kwargs.items():
+                if hasattr(self.config.logging, key):
+                    setattr(self.config.logging, key, value)
+                else:
+                    self.log_warning(f"Unknown logging config key: {key}")
+            
+            self._save_config()
+            self.log_info("Logging configuration updated")
+            return True
+            
+        except Exception as e:
+            self.log_error(f"Error updating logging config: {str(e)}")
+            return False
+    
+    def update_user_preferences(self, **kwargs) -> bool:
+        """
+        Update user preferences.
+        
+        Args:
+            **kwargs: Preference parameters to update
+            
+        Returns:
+            True if successful, False otherwise
+        """
+        try:
+            valid_preferences = [
+                'auto_save_enabled', 'clipboard_integration', 
+                'notifications_enabled', 'dark_mode'
+            ]
+            
+            for key, value in kwargs.items():
+                if key in valid_preferences:
+                    setattr(self.config, key, value)
+                else:
+                    self.log_warning(f"Unknown user preference: {key}")
+            
+            self._save_config()
+            self.log_info("User preferences updated")
+            return True
+            
+        except Exception as e:
+            self.log_error(f"Error updating user preferences: {str(e)}")
+            return False
+    
+    def reset_to_defaults(self, section: Optional[str] = None) -> bool:
+        """
+        Reset configuration to default values.
+        
+        Args:
+            section: Optional section to reset (google_sheets, camera, window, performance, logging)
+            
+        Returns:
+            True if successful, False otherwise
+        """
+        try:
+            if section is None:
+                # Reset entire configuration
+                self.config = ApplicationConfig()
+                self.log_info("Configuration reset to defaults")
+            else:
+                # Reset specific section
+                if section == 'google_sheets':
+                    self.config.google_sheets = GoogleSheetsConfig()
+                elif section == 'camera':
+                    self.config.camera = CameraConfig()
+                elif section == 'window':
+                    self.config.window = WindowConfig()
+                elif section == 'performance':
+                    self.config.performance = PerformanceConfig()
+                elif section == 'logging':
+                    self.config.logging = LoggingConfig()
+                else:
+                    self.log_warning(f"Unknown configuration section: {section}")
+                    return False
+                
+                self.log_info(f"{section} configuration reset to defaults")
+            
+            self._save_config()
+            return True
+            
+        except Exception as e:
+            self.log_error(f"Error resetting configuration: {str(e)}")
+            return False
+    
+    def export_config(self, file_path: str) -> bool:
+        """
+        Export configuration to file.
+        
+        Args:
+            file_path: Path to export configuration to
+            
+        Returns:
+            True if successful, False otherwise
+        """
+        try:
+            config_dict = self._config_to_dict()
+            
+            with open(file_path, 'w', encoding='utf-8') as f:
+                json.dump(config_dict, f, indent=2, ensure_ascii=False)
+            
+            self.log_info(f"Configuration exported to {file_path}")
             return True
             
         except Exception as e:
             self.log_error(f"Error exporting configuration: {str(e)}")
             return False
     
-    def import_config(self, filepath: Path) -> bool:
+    def import_config(self, file_path: str) -> bool:
         """
         Import configuration from file.
         
         Args:
-            filepath: Path to import file
+            file_path: Path to import configuration from
             
         Returns:
             True if successful, False otherwise
         """
         try:
-            with open(filepath, 'r', encoding='utf-8') as f:
-                import_data = json.load(f)
+            with open(file_path, 'r', encoding='utf-8') as f:
+                config_dict = json.load(f)
             
-            if 'user_settings' in import_data:
-                self.user_settings = import_data['user_settings']
-                self._save_user_settings()
-                self.log_info(f"Configuration imported from {filepath}")
-                return True
-            else:
-                self.log_error("Invalid configuration file format")
-                return False
-                
+            self._dict_to_config(config_dict)
+            self._save_config()
+            
+            self.log_info(f"Configuration imported from {file_path}")
+            return True
+            
         except Exception as e:
             self.log_error(f"Error importing configuration: {str(e)}")
-            return False 
+            return False
+    
+    def validate_config(self) -> bool:
+        """
+        Validate current configuration.
+        
+        Returns:
+            True if configuration is valid, False otherwise
+        """
+        try:
+            # Validate Google Sheets config
+            if not self.config.google_sheets.spreadsheet_id:
+                raise ConfigurationError("Google Sheets spreadsheet ID is required")
+            
+            # Validate camera config
+            if self.config.camera.camera_index < 0:
+                raise ConfigurationError("Camera index must be non-negative")
+            
+            # Validate performance config
+            if self.config.performance.thread_pool_size < 1:
+                raise ConfigurationError("Thread pool size must be at least 1")
+            
+            # Validate logging config
+            valid_log_levels = ['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL']
+            if self.config.logging.level not in valid_log_levels:
+                raise ConfigurationError(f"Invalid log level: {self.config.logging.level}")
+            
+            self.log_info("Configuration validation successful")
+            return True
+            
+        except Exception as e:
+            self.log_error(f"Configuration validation failed: {str(e)}")
+            return False
+    
+    def _load_config(self):
+        """Load configuration from file."""
+        try:
+            if self.config_file.exists():
+                with open(self.config_file, 'r', encoding='utf-8') as f:
+                    config_dict = json.load(f)
+                
+                self._dict_to_config(config_dict)
+                self.log_info(f"Configuration loaded from {self.config_file}")
+            else:
+                self.log_info("No configuration file found, using defaults")
+                
+        except Exception as e:
+            self.log_error(f"Error loading configuration: {str(e)}")
+            self.log_info("Using default configuration")
+    
+    def _save_config(self):
+        """Save configuration to file."""
+        try:
+            config_dict = self._config_to_dict()
+            
+            with open(self.config_file, 'w', encoding='utf-8') as f:
+                json.dump(config_dict, f, indent=2, ensure_ascii=False)
+            
+            self.log_debug(f"Configuration saved to {self.config_file}")
+            
+        except Exception as e:
+            self.log_error(f"Error saving configuration: {str(e)}")
+    
+    def _config_to_dict(self) -> Dict[str, Any]:
+        """Convert configuration to dictionary."""
+        config_dict = asdict(self.config)
+        
+        # Add metadata
+        config_dict['_metadata'] = {
+            'version': self.config.app_version,
+            'last_modified': datetime.now().isoformat(),
+            'exported_by': 'QR Scanner Config Manager'
+        }
+        
+        return config_dict
+    
+    def _dict_to_config(self, config_dict: Dict[str, Any]):
+        """Convert dictionary to configuration."""
+        # Remove metadata
+        config_dict.pop('_metadata', None)
+        
+        # Reconstruct configuration objects
+        if 'google_sheets' in config_dict:
+            self.config.google_sheets = GoogleSheetsConfig(**config_dict['google_sheets'])
+        if 'camera' in config_dict:
+            self.config.camera = CameraConfig(**config_dict['camera'])
+        if 'window' in config_dict:
+            self.config.window = WindowConfig(**config_dict['window'])
+        if 'performance' in config_dict:
+            self.config.performance = PerformanceConfig(**config_dict['performance'])
+        if 'logging' in config_dict:
+            self.config.logging = LoggingConfig(**config_dict['logging'])
+        
+        # Update other attributes
+        for key, value in config_dict.items():
+            if hasattr(self.config, key) and not key.endswith('_config'):
+                setattr(self.config, key, value) 

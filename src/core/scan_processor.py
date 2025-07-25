@@ -5,7 +5,7 @@ from typing import List, Dict, Any, Optional, Callable
 from collections import deque
 
 from ..utils.logger import LoggerMixin, get_logger
-from ..utils.file_utils import save_history, load_history, export_csv, export_excel
+from ..utils.file_utils import FileManager
 from ..utils.validation import validate_scan_data
 from ..utils.scanner_utils import copy_to_clipboard
 from ..config.settings import MAX_HISTORY_ITEMS, AUTO_SAVE_INTERVAL
@@ -27,6 +27,9 @@ class ScanProcessor(LoggerMixin):
         
         self.last_save_time = time.time()
         self.auto_save_enabled = True
+        
+        # Initialize file manager
+        self.file_manager = FileManager()
         
         self._load_existing_history()
         
@@ -153,7 +156,7 @@ class ScanProcessor(LoggerMixin):
     def save_all_data(self) -> bool:
         try:
             history_data = list(self.scan_history)
-            save_history(history_data)
+            self.file_manager.save_scan_history(history_data)
             self.log_info(f"Saved {len(history_data)} scan records")
             return True
         except Exception as e:
@@ -162,7 +165,7 @@ class ScanProcessor(LoggerMixin):
     
     def _load_existing_history(self):
         try:
-            history_data = load_history()
+            history_data = self.file_manager.load_scan_history()
             if history_data:
                 self.scan_history.extend(history_data)
                 self.log_info(f"Loaded {len(history_data)} scan records")
@@ -175,9 +178,9 @@ class ScanProcessor(LoggerMixin):
             history_data = list(self.scan_history)
             
             if format_type.lower() == 'csv':
-                return export_csv(history_data, filename)
+                return self.file_manager.export_to_csv(history_data, filename)
             elif format_type.lower() == 'excel':
-                return export_excel(history_data, filename)
+                return self.file_manager.export_to_excel(history_data, filename)
             else:
                 self.log_error(f"Unsupported export format: {format_type}")
                 return False
@@ -200,9 +203,4 @@ class ScanProcessor(LoggerMixin):
             'manual'
         )
     
-    def validate_and_process(self, data: str, barcode_type: str) -> bool:
-        if not data or not data.strip():
-            self.log_warning("Empty scan data")
-            return False
-        
-        return self.process_scan(data.strip(), barcode_type, 'manual') 
+ 

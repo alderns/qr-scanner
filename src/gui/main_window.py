@@ -16,7 +16,6 @@ from .tabs.scanner_tab import ScannerTab
 from .tabs.settings_tab import SettingsTab
 from .tabs.history_tab import HistoryTab
 from .tabs.logs_tab import LogsTab
-from ..utils.name_parser import extract_names_from_qr_data, clean_name
 
 WINDOW_TITLE = "QR Scanner"
 WINDOW_SIZE = "800x800"

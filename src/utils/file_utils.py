@@ -11,7 +11,7 @@ from pathlib import Path
 from typing import List, Dict, Any, Optional, Union
 import zipfile
 
-from .logger import get_logger, log_function_call, log_performance
+from .logger import get_logger, log_function_call
 from ..config.paths import (
     APP_DATA_DIR, EXPORT_DIR, HISTORY_FILE, 
     ensure_directories, SCAN_HISTORY_PATTERN
@@ -286,21 +286,4 @@ class FileManager:
 file_manager = FileManager()
 
 # Convenience functions
-def save_history(history_data: List[Dict[str, Any]], 
-                filename: Optional[str] = None) -> bool:
-    """Save scan history."""
-    return file_manager.save_scan_history(history_data, filename)
-
-def load_history(filename: Optional[str] = None) -> List[Dict[str, Any]]:
-    """Load scan history."""
-    return file_manager.load_scan_history(filename)
-
-def export_csv(data: List[Dict[str, Any]], 
-               filename: Optional[str] = None) -> bool:
-    """Export data to CSV."""
-    return file_manager.export_to_csv(data, filename)
-
-def export_excel(data: List[Dict[str, Any]], 
-                 filename: Optional[str] = None) -> bool:
-    """Export data to Excel."""
-    return file_manager.export_to_excel(data, filename) 
+ 

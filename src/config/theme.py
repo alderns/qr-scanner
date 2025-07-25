@@ -69,12 +69,7 @@ SPACING = {
     'xxxl': 32
 }
 
-# Legacy spacing constants (kept for backward compatibility)
-BUTTON_PADDING = SPACING['lg']
-SECTION_PADDING = SPACING['xl']
-MARGIN_SMALL = SPACING['sm']
-MARGIN_MEDIUM = SPACING['md']
-MARGIN_LARGE = SPACING['xl']
+
 
 # Component-specific spacing
 COMPONENT_SPACING = {

@@ -200,3 +200,13 @@ Traceback (most recent call last):
   File "C:\Program Files\WindowsApps\PythonSoftwareFoundation.Python.3.12_3.12.2800.0_x64__qbz5n2kfra8p0\Lib\tkinter\__init__.py", line 2661, in __init__
     self.tk.call(
 _tkinter.TclError: unknown option "-bg"
+2025-07-25 14:54:24,033 - src.utils.file_utils - ERROR - log_error:105 - Error initializing services: VolunteerService.__init__() missing 1 required positional argument: 'sheets_manager'
+2025-07-25 14:54:24,033 - src.utils.file_utils - ERROR - log_error:105 - Failed to initialize application: VolunteerService.__init__() missing 1 required positional argument: 'sheets_manager'
+Traceback (most recent call last):
+  File "C:\Users\aldri\Downloads\qr\src\core\app_manager.py", line 107, in initialize
+    self._initialize_services()
+  File "C:\Users\aldri\Downloads\qr\src\core\app_manager.py", line 264, in _initialize_services
+    self.volunteer_service = VolunteerService()
+                             ^^^^^^^^^^^^^^^^^^
+TypeError: VolunteerService.__init__() missing 1 required positional argument: 'sheets_manager'
+2025-07-25 14:54:24,036 - src.utils.file_utils - ERROR - main:39 - Failed to initialize application

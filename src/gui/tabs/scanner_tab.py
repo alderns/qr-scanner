@@ -145,51 +145,52 @@ class ScannerTab:
             self.video_frame.image = photo  # Keep a reference
     
     def process_scan(self, data: str, barcode_type: str):
-        """Process a new scan."""
+        """Process a new scan using the centralized scan service."""
         if not self.last_scan_text:
             return
-            
+        
+        # Use the scan service to process the scan
+        scan_result = self.app_manager.process_scan(data, barcode_type)
+        
         # Update last scan text
         self.last_scan_text.delete(1.0, tk.END)
         self.last_scan_text.insert(1.0, data)
         
-        # Look up volunteer information from master list
-        volunteer_info = self.app_manager.lookup_volunteer(data)
-        
-        if volunteer_info:
-            # Use names from master list
-            first_name = volunteer_info['first_name']
-            last_name = volunteer_info['last_name']
+        if scan_result.success:
+            # Update status based on scan result
+            if scan_result.volunteer_info:
+                first_name = scan_result.first_name
+                last_name = scan_result.last_name
+                if self.callbacks.get('update_status'):
+                    self.callbacks['update_status'](f"Found volunteer: {first_name} {last_name}")
+            else:
+                if self.callbacks.get('update_status'):
+                    self.callbacks['update_status'](f"Volunteer ID '{data}' not found in master list")
+            
+            # Call the history callback if available
+            if self.callbacks.get('add_to_history'):
+                self.callbacks['add_to_history'](
+                    scan_result.timestamp, 
+                    scan_result.data, 
+                    scan_result.formatted_name, 
+                    scan_result.status, 
+                    scan_result.barcode_type
+                )
+            
+            # Update scan count
+            if self.callbacks.get('update_scan_count'):
+                self.callbacks['update_scan_count']()
+            
+            # Update status with truncated data
+            from ...utils.common_utils import truncate_text
+            truncated_data = truncate_text(scan_result.data, 50)
             if self.callbacks.get('update_status'):
-                self.callbacks['update_status'](f"Found volunteer: {first_name} {last_name}")
+                self.callbacks['update_status'](f"Scanned: {truncated_data}")
         else:
-            # Fallback to extracting names from QR data if not found in master list
-            from ...utils.name_parser import extract_names_from_qr_data, clean_name
-            first_name, last_name = extract_names_from_qr_data(data)
-            first_name = clean_name(first_name)
-            last_name = clean_name(last_name)
+            # Handle scan processing error
+            error_msg = scan_result.error_message or "Unknown error"
             if self.callbacks.get('update_status'):
-                self.callbacks['update_status'](f"Volunteer ID '{data}' not found in master list")
-        
-        # Format name as "last name, first name" for display
-        formatted_name = f"{last_name}, {first_name}" if last_name and first_name else f"{first_name}{last_name}"
-        status = "Present"
-        
-        # Add to history
-        import time
-        timestamp = time.strftime("%I:%M:%S %p")  # 12-hour format with AM/PM
-        
-        # Call the history callback if available
-        if self.callbacks.get('add_to_history'):
-            self.callbacks['add_to_history'](timestamp, data, formatted_name, status, barcode_type)
-        
-        # Update scan count
-        if self.callbacks.get('update_scan_count'):
-            self.callbacks['update_scan_count']()
-        
-        # Update status
-        if self.callbacks.get('update_status'):
-            self.callbacks['update_status'](f"Scanned: {data[:50]}{'...' if len(data) > 50 else ''}")
+                self.callbacks['update_status'](f"Scan error: {error_msg}")
         
         # Add to Google Sheets (in background)
         self.app_manager.add_scan_data(data, barcode_type) 

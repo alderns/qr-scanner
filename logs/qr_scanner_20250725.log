@@ -2905,3 +2905,238 @@ _tkinter.TclError: unknown option "-bg"
 2025-07-25 14:41:23,214 - src.utils.file_utils - INFO - log_info:96 - Application shutdown complete
 2025-07-25 14:41:23,553 - src.utils.file_utils - INFO - main:67 - Performance monitoring stopped
 2025-07-25 14:41:23,553 - src.utils.file_utils - INFO - main:68 - Application shutdown complete
+2025-07-25 14:54:23,887 - src.utils.file_utils - INFO - main:26 - Starting QR Scanner application
+2025-07-25 14:54:23,942 - src.utils.file_utils - INFO - log_info:96 - No configuration file found, using defaults
+2025-07-25 14:54:23,942 - src.utils.file_utils - INFO - log_info:96 - Configuration manager initialized
+2025-07-25 14:54:23,943 - src.utils.file_utils - INFO - log_info:96 - QR Scanner App initialized
+2025-07-25 14:54:24,006 - src.utils.file_utils - INFO - change_state:207 - State changed: initialized -> initializing
+2025-07-25 14:54:24,007 - src.utils.file_utils - INFO - log_info:96 - All dependencies available
+2025-07-25 14:54:24,007 - src.utils.file_utils - WARNING - load_scan_history:77 - History file not found: C:\Users\aldri\Downloads\qr\data\scan_history.json
+2025-07-25 14:54:24,007 - src.utils.file_utils - INFO - log_info:96 - Scan processor initialized
+2025-07-25 14:54:24,008 - src.utils.file_utils - INFO - log_info:96 - Found credentials.json, setting up automatically
+2025-07-25 14:54:24,008 - src.utils.file_utils - INFO - setup_credentials:53 - Credentials setup successful
+2025-07-25 14:54:24,008 - src.utils.file_utils - INFO - log_info:96 - Credentials setup successful
+2025-07-25 14:54:24,033 - src.utils.file_utils - INFO - log_info:96 - Core components initialized
+2025-07-25 14:54:24,033 - src.utils.file_utils - ERROR - log_error:105 - Error initializing services: VolunteerService.__init__() missing 1 required positional argument: 'sheets_manager'
+2025-07-25 14:54:24,033 - src.utils.file_utils - ERROR - log_error:105 - Failed to initialize application: VolunteerService.__init__() missing 1 required positional argument: 'sheets_manager'
+Traceback (most recent call last):
+  File "C:\Users\aldri\Downloads\qr\src\core\app_manager.py", line 107, in initialize
+    self._initialize_services()
+  File "C:\Users\aldri\Downloads\qr\src\core\app_manager.py", line 264, in _initialize_services
+    self.volunteer_service = VolunteerService()
+                             ^^^^^^^^^^^^^^^^^^
+TypeError: VolunteerService.__init__() missing 1 required positional argument: 'sheets_manager'
+2025-07-25 14:54:24,036 - src.utils.file_utils - INFO - change_state:207 - State changed: initializing -> error
+2025-07-25 14:54:24,036 - src.utils.file_utils - ERROR - main:39 - Failed to initialize application
+2025-07-25 14:54:25,303 - src.utils.file_utils - INFO - connect_to_spreadsheet:144 - Connected to spreadsheet: Sample Attendance
+2025-07-25 14:54:25,932 - src.utils.file_utils - INFO - log_info:96 - Connected to spreadsheet: Sample Attendance
+2025-07-25 14:54:26,255 - src.utils.file_utils - INFO - load_master_list:345 - Loaded 44 records from master list
+2025-07-25 14:54:26,255 - src.utils.file_utils - INFO - log_info:96 - Loaded 44 records from master list
+2025-07-25 14:54:26,699 - src.utils.file_utils - INFO - load_master_list:345 - Loaded 44 records from master list
+2025-07-25 14:54:26,699 - src.utils.file_utils - INFO - log_info:96 - Loaded 44 records from master list
+2025-07-25 14:54:27,582 - src.utils.file_utils - INFO - start_camera:31 - Camera started successfully
+2025-07-25 14:54:27,592 - src.utils.file_utils - INFO - main:67 - Performance monitoring stopped
+2025-07-25 14:54:27,592 - src.utils.file_utils - INFO - main:68 - Application shutdown complete
+2025-07-25 14:54:45,803 - src.utils.file_utils - INFO - main:26 - Starting QR Scanner application
+2025-07-25 14:54:45,859 - src.utils.file_utils - INFO - log_info:96 - No configuration file found, using defaults
+2025-07-25 14:54:45,859 - src.utils.file_utils - INFO - log_info:96 - Configuration manager initialized
+2025-07-25 14:54:45,859 - src.utils.file_utils - INFO - log_info:96 - QR Scanner App initialized
+2025-07-25 14:54:45,904 - src.utils.file_utils - INFO - change_state:207 - State changed: initialized -> initializing
+2025-07-25 14:54:45,904 - src.utils.file_utils - INFO - log_info:96 - All dependencies available
+2025-07-25 14:54:45,905 - src.utils.file_utils - WARNING - load_scan_history:77 - History file not found: C:\Users\aldri\Downloads\qr\data\scan_history.json
+2025-07-25 14:54:45,905 - src.utils.file_utils - INFO - log_info:96 - Scan processor initialized
+2025-07-25 14:54:45,905 - src.utils.file_utils - INFO - log_info:96 - Found credentials.json, setting up automatically
+2025-07-25 14:54:45,905 - src.utils.file_utils - INFO - setup_credentials:53 - Credentials setup successful
+2025-07-25 14:54:45,905 - src.utils.file_utils - INFO - log_info:96 - Credentials setup successful
+2025-07-25 14:54:45,931 - src.utils.file_utils - INFO - log_info:96 - Core components initialized
+2025-07-25 14:54:45,931 - src.utils.file_utils - INFO - log_info:96 - Google Sheets service initialized
+2025-07-25 14:54:45,931 - src.utils.file_utils - INFO - log_info:96 - Scan service initialized
+2025-07-25 14:54:45,932 - src.utils.file_utils - INFO - log_info:96 - Service layer initialized successfully
+2025-07-25 14:54:45,932 - src.utils.file_utils - INFO - change_state:207 - State changed: initializing -> ready
+2025-07-25 14:54:45,932 - src.utils.file_utils - INFO - log_info:96 - Application initialized successfully
+2025-07-25 14:54:45,933 - src.utils.file_utils - INFO - log_info:96 - Application started
+2025-07-25 14:54:45,934 - src.utils.file_utils - INFO - main:50 - Application started successfully
+2025-07-25 14:54:45,940 - src.utils.file_utils - INFO - main:54 - Performance monitoring started
+2025-07-25 14:54:46,861 - src.utils.file_utils - INFO - connect_to_spreadsheet:144 - Connected to spreadsheet: Sample Attendance
+2025-07-25 14:54:47,503 - src.utils.file_utils - INFO - log_info:96 - Connected to spreadsheet: Sample Attendance
+2025-07-25 14:54:47,847 - src.utils.file_utils - INFO - load_master_list:345 - Loaded 44 records from master list
+2025-07-25 14:54:47,847 - src.utils.file_utils - INFO - log_info:96 - Loaded 44 records from master list
+2025-07-25 14:54:48,269 - src.utils.file_utils - INFO - load_master_list:345 - Loaded 44 records from master list
+2025-07-25 14:54:48,269 - src.utils.file_utils - INFO - log_info:96 - Loaded 44 records from master list
+2025-07-25 14:54:49,103 - src.utils.file_utils - INFO - start_camera:31 - Camera started successfully
+2025-07-25 14:55:02,171 - src.utils.file_utils - INFO - log_info:96 - Shutting down application...
+2025-07-25 14:55:03,538 - src.utils.file_utils - INFO - stop_camera:47 - Camera stopped
+2025-07-25 14:55:03,538 - src.utils.file_utils - INFO - save_scan_history:52 - Scan history saved to C:\Users\aldri\Downloads\qr\data\scan_history_20250725_145503.json
+2025-07-25 14:55:03,538 - src.utils.file_utils - INFO - log_info:96 - Saved 0 scan records
+2025-07-25 14:55:03,540 - src.utils.file_utils - INFO - close:470 - Google Sheets connection closed
+2025-07-25 14:55:03,573 - src.utils.file_utils - INFO - log_info:96 - Application shutdown complete
+2025-07-25 14:55:04,033 - src.utils.file_utils - INFO - main:67 - Performance monitoring stopped
+2025-07-25 14:55:04,033 - src.utils.file_utils - INFO - main:68 - Application shutdown complete
+2025-07-25 14:56:06,628 - src.utils.file_utils - INFO - main:26 - Starting QR Scanner application
+2025-07-25 14:56:06,679 - src.utils.file_utils - INFO - log_info:96 - No configuration file found, using defaults
+2025-07-25 14:56:06,679 - src.utils.file_utils - INFO - log_info:96 - Configuration manager initialized
+2025-07-25 14:56:06,679 - src.utils.file_utils - INFO - log_info:96 - QR Scanner App initialized
+2025-07-25 14:56:06,727 - src.utils.file_utils - INFO - change_state:207 - State changed: initialized -> initializing
+2025-07-25 14:56:06,727 - src.utils.file_utils - INFO - log_info:96 - All dependencies available
+2025-07-25 14:56:06,727 - src.utils.file_utils - WARNING - load_scan_history:77 - History file not found: C:\Users\aldri\Downloads\qr\data\scan_history.json
+2025-07-25 14:56:06,728 - src.utils.file_utils - INFO - log_info:96 - Scan processor initialized
+2025-07-25 14:56:06,728 - src.utils.file_utils - INFO - log_info:96 - Found credentials.json, setting up automatically
+2025-07-25 14:56:06,728 - src.utils.file_utils - INFO - setup_credentials:53 - Credentials setup successful
+2025-07-25 14:56:06,728 - src.utils.file_utils - INFO - log_info:96 - Credentials setup successful
+2025-07-25 14:56:06,753 - src.utils.file_utils - INFO - log_info:96 - Core components initialized
+2025-07-25 14:56:06,753 - src.utils.file_utils - INFO - log_info:96 - Google Sheets service initialized
+2025-07-25 14:56:06,753 - src.utils.file_utils - INFO - log_info:96 - Scan service initialized
+2025-07-25 14:56:06,753 - src.utils.file_utils - INFO - log_info:96 - Service layer initialized successfully
+2025-07-25 14:56:06,754 - src.utils.file_utils - INFO - change_state:207 - State changed: initializing -> ready
+2025-07-25 14:56:06,754 - src.utils.file_utils - INFO - log_info:96 - Application initialized successfully
+2025-07-25 14:56:06,754 - src.utils.file_utils - INFO - log_info:96 - Application started
+2025-07-25 14:56:06,755 - src.utils.file_utils - INFO - main:50 - Application started successfully
+2025-07-25 14:56:06,761 - src.utils.file_utils - INFO - main:54 - Performance monitoring started
+2025-07-25 14:56:07,668 - src.utils.file_utils - INFO - connect_to_spreadsheet:144 - Connected to spreadsheet: Sample Attendance
+2025-07-25 14:56:08,439 - src.utils.file_utils - INFO - log_info:96 - Connected to spreadsheet: Sample Attendance
+2025-07-25 14:56:08,925 - src.utils.file_utils - INFO - load_master_list:345 - Loaded 44 records from master list
+2025-07-25 14:56:08,925 - src.utils.file_utils - INFO - log_info:96 - Loaded 44 records from master list
+2025-07-25 14:56:09,365 - src.utils.file_utils - INFO - load_master_list:345 - Loaded 44 records from master list
+2025-07-25 14:56:09,365 - src.utils.file_utils - INFO - log_info:96 - Loaded 44 records from master list
+2025-07-25 14:56:10,205 - src.utils.file_utils - INFO - start_camera:31 - Camera started successfully
+2025-07-25 14:56:12,120 - src.utils.file_utils - INFO - _scan_loop:76 - Scanned QRCODE: CCFM-W-010
+2025-07-25 14:56:12,120 - src.utils.file_utils - INFO - log_info:96 - Processed scan: CCFM-W-010
+2025-07-25 14:56:12,122 - src.utils.file_utils - INFO - lookup_volunteer_by_id:452 - Found volunteer: Kesia De Leon (ID: CCFM-W-010)
+2025-07-25 14:56:12,123 - src.utils.file_utils - INFO - lookup_volunteer_by_id:452 - Found volunteer: Kesia De Leon (ID: CCFM-W-010)
+2025-07-25 14:56:12,123 - src.utils.file_utils - INFO - add_scan_data:273 - Found volunteer in master list: Kesia De Leon
+2025-07-25 14:56:12,607 - src.utils.file_utils - INFO - add_scan_data:314 - Added scan data to sheets: CCFM-W-010 (Name: Kesia De Leon)
+2025-07-25 14:56:28,025 - src.utils.file_utils - INFO - _scan_loop:76 - Scanned QRCODE: CCFM-W-009
+2025-07-25 14:56:28,025 - src.utils.file_utils - INFO - log_info:96 - Processed scan: CCFM-W-009
+2025-07-25 14:56:28,025 - src.utils.file_utils - INFO - lookup_volunteer_by_id:452 - Found volunteer: Aldrin De Leon (ID: CCFM-W-009)
+2025-07-25 14:56:28,027 - src.utils.file_utils - INFO - lookup_volunteer_by_id:452 - Found volunteer: Aldrin De Leon (ID: CCFM-W-009)
+2025-07-25 14:56:28,027 - src.utils.file_utils - INFO - add_scan_data:273 - Found volunteer in master list: Aldrin De Leon
+2025-07-25 14:56:28,412 - src.utils.file_utils - INFO - add_scan_data:314 - Added scan data to sheets: CCFM-W-009 (Name: Aldrin De Leon)
+2025-07-25 14:56:36,755 - src.utils.file_utils - INFO - save_scan_history:52 - Scan history saved to C:\Users\aldri\Downloads\qr\data\scan_history_20250725_145636.json
+2025-07-25 14:56:36,755 - src.utils.file_utils - INFO - log_info:96 - Saved 2 scan records
+2025-07-25 14:56:44,340 - src.utils.file_utils - INFO - main:59 - Application interrupted by user
+2025-07-25 14:56:44,959 - src.utils.file_utils - INFO - main:67 - Performance monitoring stopped
+2025-07-25 14:56:44,959 - src.utils.file_utils - INFO - main:68 - Application shutdown complete
+2025-07-25 15:02:34,177 - src.utils.file_utils - INFO - main:26 - Starting QR Scanner application
+2025-07-25 15:02:34,230 - src.utils.file_utils - INFO - log_info:96 - No configuration file found, using defaults
+2025-07-25 15:02:34,230 - src.utils.file_utils - INFO - log_info:96 - Configuration manager initialized
+2025-07-25 15:02:34,232 - src.utils.file_utils - INFO - log_info:96 - QR Scanner App initialized
+2025-07-25 15:02:34,280 - src.utils.file_utils - INFO - change_state:207 - State changed: initialized -> initializing
+2025-07-25 15:02:34,280 - src.utils.file_utils - INFO - log_info:96 - All dependencies available
+2025-07-25 15:02:34,282 - src.utils.file_utils - WARNING - load_scan_history:77 - History file not found: C:\Users\aldri\Downloads\qr\data\scan_history.json
+2025-07-25 15:02:34,282 - src.utils.file_utils - INFO - log_info:96 - Scan processor initialized
+2025-07-25 15:02:34,282 - src.utils.file_utils - INFO - log_info:96 - Found credentials.json, setting up automatically
+2025-07-25 15:02:34,284 - src.utils.file_utils - INFO - setup_credentials:53 - Credentials setup successful
+2025-07-25 15:02:34,284 - src.utils.file_utils - INFO - log_info:96 - Credentials setup successful
+2025-07-25 15:02:34,314 - src.utils.file_utils - INFO - log_info:96 - Core components initialized
+2025-07-25 15:02:34,315 - src.utils.file_utils - INFO - log_info:96 - Google Sheets service initialized
+2025-07-25 15:02:34,315 - src.utils.file_utils - INFO - log_info:96 - Scan service initialized
+2025-07-25 15:02:34,315 - src.utils.file_utils - INFO - log_info:96 - Service layer initialized successfully
+2025-07-25 15:02:34,315 - src.utils.file_utils - INFO - change_state:207 - State changed: initializing -> ready
+2025-07-25 15:02:34,315 - src.utils.file_utils - INFO - log_info:96 - Application initialized successfully
+2025-07-25 15:02:34,315 - src.utils.file_utils - INFO - log_info:96 - Application started
+2025-07-25 15:02:34,318 - src.utils.file_utils - INFO - main:50 - Application started successfully
+2025-07-25 15:02:34,324 - src.utils.file_utils - INFO - main:54 - Performance monitoring started
+2025-07-25 15:02:35,440 - src.utils.file_utils - INFO - connect_to_spreadsheet:144 - Connected to spreadsheet: Sample Attendance
+2025-07-25 15:02:36,087 - src.utils.file_utils - INFO - log_info:96 - Connected to spreadsheet: Sample Attendance
+2025-07-25 15:02:36,420 - src.utils.file_utils - INFO - load_master_list:345 - Loaded 44 records from master list
+2025-07-25 15:02:36,420 - src.utils.file_utils - INFO - log_info:96 - Loaded 44 records from master list
+2025-07-25 15:02:36,774 - src.utils.file_utils - INFO - load_master_list:345 - Loaded 44 records from master list
+2025-07-25 15:02:36,774 - src.utils.file_utils - INFO - log_info:96 - Loaded 44 records from master list
+2025-07-25 15:02:37,719 - src.utils.file_utils - INFO - start_camera:31 - Camera started successfully
+2025-07-25 15:02:47,712 - src.utils.file_utils - INFO - _scan_loop:76 - Scanned QRCODE: CCFM-W-009
+2025-07-25 15:02:47,714 - src.utils.file_utils - INFO - log_info:96 - Processed scan: CCFM-W-009
+2025-07-25 15:02:47,716 - src.utils.file_utils - INFO - lookup_volunteer_by_id:452 - Found volunteer: Aldrin De Leon (ID: CCFM-W-009)
+2025-07-25 15:02:47,717 - src.utils.file_utils - INFO - lookup_volunteer_by_id:452 - Found volunteer: Aldrin De Leon (ID: CCFM-W-009)
+2025-07-25 15:02:47,718 - src.utils.file_utils - INFO - add_scan_data:273 - Found volunteer in master list: Aldrin De Leon
+2025-07-25 15:02:48,110 - src.utils.file_utils - INFO - add_scan_data:314 - Added scan data to sheets: CCFM-W-009 (Name: Aldrin De Leon)
+2025-07-25 15:02:59,981 - src.utils.file_utils - INFO - _scan_loop:76 - Scanned QRCODE: CCFM-W-010
+2025-07-25 15:02:59,981 - src.utils.file_utils - INFO - log_info:96 - Processed scan: CCFM-W-010
+2025-07-25 15:02:59,982 - src.utils.file_utils - INFO - lookup_volunteer_by_id:452 - Found volunteer: Kesia De Leon (ID: CCFM-W-010)
+2025-07-25 15:02:59,982 - src.utils.file_utils - INFO - lookup_volunteer_by_id:452 - Found volunteer: Kesia De Leon (ID: CCFM-W-010)
+2025-07-25 15:02:59,982 - src.utils.file_utils - INFO - add_scan_data:273 - Found volunteer in master list: Kesia De Leon
+2025-07-25 15:03:00,384 - src.utils.file_utils - INFO - add_scan_data:314 - Added scan data to sheets: CCFM-W-010 (Name: Kesia De Leon)
+2025-07-25 15:03:02,962 - src.utils.file_utils - INFO - log_info:96 - Shutting down application...
+2025-07-25 15:03:04,332 - src.utils.file_utils - INFO - stop_camera:47 - Camera stopped
+2025-07-25 15:03:04,334 - src.utils.file_utils - INFO - save_scan_history:52 - Scan history saved to C:\Users\aldri\Downloads\qr\data\scan_history_20250725_150304.json
+2025-07-25 15:03:04,334 - src.utils.file_utils - INFO - log_info:96 - Saved 2 scan records
+2025-07-25 15:03:04,334 - src.utils.file_utils - INFO - close:470 - Google Sheets connection closed
+2025-07-25 15:03:04,382 - src.utils.file_utils - INFO - log_info:96 - Application shutdown complete
+2025-07-25 15:03:04,484 - src.utils.file_utils - INFO - main:67 - Performance monitoring stopped
+2025-07-25 15:03:04,484 - src.utils.file_utils - INFO - main:68 - Application shutdown complete
+2025-07-25 15:35:55,665 - src.utils.file_utils - INFO - main:26 - Starting QR Scanner application
+2025-07-25 15:35:55,721 - src.utils.file_utils - INFO - log_info:96 - No configuration file found, using defaults
+2025-07-25 15:35:55,723 - src.utils.file_utils - INFO - log_info:96 - Configuration manager initialized
+2025-07-25 15:35:55,723 - src.utils.file_utils - INFO - log_info:96 - QR Scanner App initialized
+2025-07-25 15:35:55,787 - src.utils.file_utils - INFO - change_state:207 - State changed: initialized -> initializing
+2025-07-25 15:35:55,787 - src.utils.file_utils - INFO - log_info:96 - All dependencies available
+2025-07-25 15:35:55,788 - src.utils.file_utils - WARNING - load_scan_history:77 - History file not found: C:\Users\aldri\Downloads\qr\data\scan_history.json
+2025-07-25 15:35:55,788 - src.utils.file_utils - INFO - log_info:96 - Scan processor initialized
+2025-07-25 15:35:55,789 - src.utils.file_utils - INFO - log_info:96 - Found credentials.json, setting up automatically
+2025-07-25 15:35:56,047 - src.utils.file_utils - INFO - _get_credentials:93 - Refreshed expired token
+2025-07-25 15:35:56,049 - src.utils.file_utils - INFO - setup_credentials:53 - Credentials setup successful
+2025-07-25 15:35:56,049 - src.utils.file_utils - INFO - log_info:96 - Credentials setup successful
+2025-07-25 15:35:56,072 - src.utils.file_utils - INFO - log_info:96 - Core components initialized
+2025-07-25 15:35:56,072 - src.utils.file_utils - INFO - log_info:96 - Google Sheets service initialized
+2025-07-25 15:35:56,072 - src.utils.file_utils - INFO - log_info:96 - Scan service initialized
+2025-07-25 15:35:56,072 - src.utils.file_utils - INFO - log_info:96 - Service layer initialized successfully
+2025-07-25 15:35:56,072 - src.utils.file_utils - INFO - change_state:207 - State changed: initializing -> ready
+2025-07-25 15:35:56,073 - src.utils.file_utils - INFO - log_info:96 - Application initialized successfully
+2025-07-25 15:35:56,073 - src.utils.file_utils - INFO - log_info:96 - Application started
+2025-07-25 15:35:56,074 - src.utils.file_utils - INFO - main:50 - Application started successfully
+2025-07-25 15:35:56,081 - src.utils.file_utils - INFO - main:54 - Performance monitoring started
+2025-07-25 15:35:57,431 - src.utils.file_utils - INFO - connect_to_spreadsheet:144 - Connected to spreadsheet: Sample Attendance
+2025-07-25 15:35:58,166 - src.utils.file_utils - INFO - log_info:96 - Connected to spreadsheet: Sample Attendance
+2025-07-25 15:35:58,496 - src.utils.file_utils - INFO - load_master_list:345 - Loaded 44 records from master list
+2025-07-25 15:35:58,496 - src.utils.file_utils - INFO - log_info:96 - Loaded 44 records from master list
+2025-07-25 15:35:58,846 - src.utils.file_utils - INFO - load_master_list:345 - Loaded 44 records from master list
+2025-07-25 15:35:58,846 - src.utils.file_utils - INFO - log_info:96 - Loaded 44 records from master list
+2025-07-25 15:35:59,679 - src.utils.file_utils - INFO - start_camera:31 - Camera started successfully
+2025-07-25 15:36:02,591 - src.utils.file_utils - INFO - log_info:96 - Shutting down application...
+2025-07-25 15:36:03,969 - src.utils.file_utils - INFO - stop_camera:47 - Camera stopped
+2025-07-25 15:36:03,971 - src.utils.file_utils - INFO - save_scan_history:52 - Scan history saved to C:\Users\aldri\Downloads\qr\data\scan_history_20250725_153603.json
+2025-07-25 15:36:03,971 - src.utils.file_utils - INFO - log_info:96 - Saved 0 scan records
+2025-07-25 15:36:03,971 - src.utils.file_utils - INFO - close:470 - Google Sheets connection closed
+2025-07-25 15:36:04,012 - src.utils.file_utils - INFO - log_info:96 - Application shutdown complete
+2025-07-25 15:36:04,116 - src.utils.file_utils - INFO - main:67 - Performance monitoring stopped
+2025-07-25 15:36:04,116 - src.utils.file_utils - INFO - main:68 - Application shutdown complete
+2025-07-25 16:00:59,520 - src.utils.file_utils - INFO - main:26 - Starting QR Scanner application
+2025-07-25 16:00:59,575 - src.utils.file_utils - INFO - log_info:96 - No configuration file found, using defaults
+2025-07-25 16:00:59,575 - src.utils.file_utils - INFO - log_info:96 - Configuration manager initialized
+2025-07-25 16:00:59,575 - src.utils.file_utils - INFO - log_info:96 - QR Scanner App initialized
+2025-07-25 16:00:59,624 - src.utils.file_utils - INFO - change_state:207 - State changed: initialized -> initializing
+2025-07-25 16:00:59,624 - src.utils.file_utils - INFO - log_info:96 - All dependencies available
+2025-07-25 16:00:59,625 - src.utils.file_utils - WARNING - load_scan_history:77 - History file not found: C:\Users\aldri\Downloads\qr\data\scan_history.json
+2025-07-25 16:00:59,626 - src.utils.file_utils - INFO - log_info:96 - Scan processor initialized
+2025-07-25 16:00:59,626 - src.utils.file_utils - INFO - log_info:96 - Found credentials.json, setting up automatically
+2025-07-25 16:00:59,635 - src.utils.file_utils - INFO - setup_credentials:53 - Credentials setup successful
+2025-07-25 16:00:59,635 - src.utils.file_utils - INFO - log_info:96 - Credentials setup successful
+2025-07-25 16:00:59,660 - src.utils.file_utils - INFO - log_info:96 - Core components initialized
+2025-07-25 16:00:59,660 - src.utils.file_utils - INFO - log_info:96 - Google Sheets service initialized
+2025-07-25 16:00:59,661 - src.utils.file_utils - INFO - log_info:96 - Scan service initialized
+2025-07-25 16:00:59,661 - src.utils.file_utils - INFO - log_info:96 - Service layer initialized successfully
+2025-07-25 16:00:59,661 - src.utils.file_utils - INFO - change_state:207 - State changed: initializing -> ready
+2025-07-25 16:00:59,662 - src.utils.file_utils - INFO - log_info:96 - Application initialized successfully
+2025-07-25 16:00:59,662 - src.utils.file_utils - INFO - log_info:96 - Application started
+2025-07-25 16:00:59,663 - src.utils.file_utils - INFO - main:50 - Application started successfully
+2025-07-25 16:00:59,670 - src.utils.file_utils - INFO - main:54 - Performance monitoring started
+2025-07-25 16:01:01,284 - src.utils.file_utils - INFO - connect_to_spreadsheet:144 - Connected to spreadsheet: Sample Attendance
+2025-07-25 16:01:01,871 - src.utils.file_utils - INFO - log_info:96 - Connected to spreadsheet: Sample Attendance
+2025-07-25 16:01:02,155 - src.utils.file_utils - INFO - load_master_list:345 - Loaded 44 records from master list
+2025-07-25 16:01:02,157 - src.utils.file_utils - INFO - log_info:96 - Loaded 44 records from master list
+2025-07-25 16:01:02,451 - src.utils.file_utils - INFO - load_master_list:345 - Loaded 44 records from master list
+2025-07-25 16:01:02,451 - src.utils.file_utils - INFO - log_info:96 - Loaded 44 records from master list
+2025-07-25 16:01:03,310 - src.utils.file_utils - INFO - start_camera:31 - Camera started successfully
+2025-07-25 16:01:05,600 - src.utils.file_utils - INFO - _scan_loop:76 - Scanned QRCODE: CCFM-W-002
+2025-07-25 16:01:05,600 - src.utils.file_utils - INFO - log_info:96 - Processed scan: CCFM-W-002
+2025-07-25 16:01:05,602 - src.utils.file_utils - INFO - lookup_volunteer_by_id:452 - Found volunteer: Akie Galura (ID: CCFM-W-002)
+2025-07-25 16:01:05,602 - src.utils.file_utils - INFO - lookup_volunteer_by_id:452 - Found volunteer: Akie Galura (ID: CCFM-W-002)
+2025-07-25 16:01:05,602 - src.utils.file_utils - INFO - add_scan_data:273 - Found volunteer in master list: Akie Galura
+2025-07-25 16:01:05,928 - src.utils.file_utils - INFO - add_scan_data:314 - Added scan data to sheets: CCFM-W-002 (Name: Akie Galura)
+2025-07-25 16:01:21,205 - src.utils.file_utils - INFO - log_info:96 - Shutting down application...
+2025-07-25 16:01:22,633 - src.utils.file_utils - INFO - stop_camera:47 - Camera stopped
+2025-07-25 16:01:22,634 - src.utils.file_utils - INFO - save_scan_history:52 - Scan history saved to C:\Users\aldri\Downloads\qr\data\scan_history_20250725_160122.json
+2025-07-25 16:01:22,635 - src.utils.file_utils - INFO - log_info:96 - Saved 1 scan records
+2025-07-25 16:01:22,635 - src.utils.file_utils - INFO - close:470 - Google Sheets connection closed
+2025-07-25 16:01:22,687 - src.utils.file_utils - INFO - log_info:96 - Application shutdown complete
+2025-07-25 16:01:22,792 - src.utils.file_utils - INFO - main:67 - Performance monitoring stopped
+2025-07-25 16:01:22,792 - src.utils.file_utils - INFO - main:68 - Application shutdown complete

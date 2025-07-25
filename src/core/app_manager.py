@@ -6,15 +6,20 @@ import tkinter as tk
 from tkinter import messagebox
 import sys
 import threading
-from typing import Optional, Callable, Any
+from typing import Optional, Callable, Any, Dict
 from pathlib import Path
 
 from ..utils.logger import LoggerMixin, get_logger, setup_logger
+from ..utils.common_utils import CallbackManager, StateManager, RetryManager
 from ..config.paths import ensure_directories
+from ..config.config_manager import ConfigManager
 from ..config.settings import *
 from .camera_manager import CameraManager
 from .sheets_manager import GoogleSheetsManager
 from .scan_processor import ScanProcessor
+from ..services.scan_service import ScanService, ScanResult
+from ..services.sheets_service import GoogleSheetsService, SheetConfig, ScanData
+from ..services.volunteer_service import VolunteerService
 
 logger = get_logger(__name__)
 
@@ -36,11 +41,24 @@ class QRScannerApp(LoggerMixin):
         # Setup logging
         setup_logger()
         
+        # Initialize configuration manager
+        self.config_manager = ConfigManager()
+        
+        # Initialize utility managers
+        self.callback_manager = CallbackManager()
+        self.state_manager = StateManager("initialized")
+        self.retry_manager = RetryManager()
+        
         # Core components
         self.root: Optional[tk.Tk] = None
         self.camera_manager: Optional[CameraManager] = None
         self.sheets_manager: Optional[GoogleSheetsManager] = None
         self.scan_processor: Optional[ScanProcessor] = None
+        
+        # Service layer components
+        self.scan_service: Optional[ScanService] = None
+        self.sheets_service: Optional[GoogleSheetsService] = None
+        self.volunteer_service: Optional[VolunteerService] = None
         
         # Application state
         self.is_initialized = False
@@ -50,6 +68,9 @@ class QRScannerApp(LoggerMixin):
         # Callbacks
         self.gui_callback: Optional[Callable] = None
         self.status_callback: Optional[Callable] = None
+        
+        # Setup state transition rules
+        self._setup_state_transitions()
         
         self.log_info("QR Scanner App initialized")
     
@@ -71,12 +92,19 @@ class QRScannerApp(LoggerMixin):
             self.gui_callback = gui_callback
             self.status_callback = status_callback
             
+            # Change state to initializing
+            self.state_manager.change_state("initializing")
+            
             # Check dependencies
             if not self._check_dependencies():
+                self.state_manager.change_state("error")
                 return False
             
             # Initialize core components
             self._initialize_components()
+            
+            # Initialize service layer
+            self._initialize_services()
             
             # Setup auto-save
             if self.auto_save_enabled:
@@ -86,11 +114,13 @@ class QRScannerApp(LoggerMixin):
             self._setup_cleanup()
             
             self.is_initialized = True
+            self.state_manager.change_state("ready")
             self.log_info("Application initialized successfully")
             return True
             
         except Exception as e:
             self.log_error(f"Failed to initialize application: {str(e)}", exc_info=True)
+            self.state_manager.change_state("error")
             return False
     
     def _check_dependencies(self) -> bool:
@@ -217,6 +247,38 @@ class QRScannerApp(LoggerMixin):
         """Setup cleanup procedures for application exit."""
         if self.root:
             self.root.protocol("WM_DELETE_WINDOW", self.shutdown)
+    
+    def _setup_state_transitions(self):
+        """Setup application state transition rules."""
+        self.state_manager.add_transition_rule("initialized", ["initializing", "error"])
+        self.state_manager.add_transition_rule("initializing", ["ready", "error"])
+        self.state_manager.add_transition_rule("ready", ["running", "error", "shutdown"])
+        self.state_manager.add_transition_rule("running", ["ready", "error", "shutdown"])
+        self.state_manager.add_transition_rule("error", ["ready", "shutdown"])
+        self.state_manager.add_transition_rule("shutdown", [])
+    
+    def _initialize_services(self):
+        """Initialize service layer components."""
+        try:
+            # Initialize sheets service first
+            sheets_config = SheetConfig(
+                spreadsheet_id=self.config_manager.get_google_sheets_config().spreadsheet_id,
+                sheet_name=self.config_manager.get_google_sheets_config().sheet_name,
+                master_list_sheet=self.config_manager.get_google_sheets_config().master_list_sheet
+            )
+            self.sheets_service = GoogleSheetsService(sheets_config)
+            
+            # Initialize volunteer service with sheets manager
+            self.volunteer_service = VolunteerService(self.sheets_manager)
+            
+            # Initialize scan service with volunteer service
+            self.scan_service = ScanService(self.volunteer_service)
+            
+            self.log_info("Service layer initialized successfully")
+            
+        except Exception as e:
+            self.log_error(f"Error initializing services: {str(e)}")
+            raise
     
     def start(self) -> bool:
         """
@@ -512,4 +574,119 @@ class QRScannerApp(LoggerMixin):
             return False
         except Exception as e:
             self.log_error(f"Error copying to clipboard: {str(e)}")
+            return False
+    
+    def process_scan(self, data: str, barcode_type: str) -> ScanResult:
+        """
+        Process a scan using the scan service.
+        
+        Args:
+            data: Raw scan data
+            barcode_type: Type of barcode
+            
+        Returns:
+            ScanResult object
+        """
+        if not self.scan_service:
+            self.log_error("Scan service not initialized")
+            return ScanResult(
+                success=False,
+                data=data,
+                barcode_type=barcode_type,
+                timestamp="",
+                formatted_name="",
+                first_name="",
+                last_name="",
+                status="Error",
+                error_message="Scan service not initialized"
+            )
+        
+        return self.scan_service.process_scan(data, barcode_type)
+    
+    def add_scan_data_via_service(self, data: str, barcode_type: str) -> bool:
+        """
+        Add scan data to Google Sheets using the sheets service.
+        
+        Args:
+            data: Scan data
+            barcode_type: Type of barcode
+            
+        Returns:
+            True if successful, False otherwise
+        """
+        if not self.sheets_service:
+            self.log_error("Sheets service not initialized")
+            return False
+        
+        # Process scan to get formatted data
+        scan_result = self.process_scan(data, barcode_type)
+        
+        # Create scan data for sheets service
+        scan_data = ScanData(
+            data=scan_result.data,
+            barcode_type=scan_result.barcode_type,
+            formatted_name=scan_result.formatted_name,
+            first_name=scan_result.first_name,
+            last_name=scan_result.last_name,
+            status=scan_result.status
+        )
+        
+        # Use retry manager for sheets operation
+        return self.retry_manager.execute_with_retry(
+            self.sheets_service.add_scan_data,
+            scan_data,
+            retry_exceptions=(Exception,),
+            error_message="Failed to add scan data to sheets"
+        )
+    
+    def lookup_volunteer_via_service(self, volunteer_id: str) -> Optional[Dict[str, str]]:
+        """
+        Look up volunteer information using the volunteer service.
+        
+        Args:
+            volunteer_id: Volunteer ID to lookup
+            
+        Returns:
+            Volunteer information or None if not found
+        """
+        if not self.volunteer_service:
+            self.log_error("Volunteer service not initialized")
+            return None
+        
+        return self.volunteer_service.lookup_volunteer(volunteer_id)
+    
+    def get_config(self):
+        """Get application configuration."""
+        return self.config_manager.get_config()
+    
+    def update_config(self, section: str, **kwargs) -> bool:
+        """
+        Update application configuration.
+        
+        Args:
+            section: Configuration section to update
+            **kwargs: Configuration parameters
+            
+        Returns:
+            True if successful, False otherwise
+        """
+        try:
+            if section == 'google_sheets':
+                return self.config_manager.update_google_sheets_config(**kwargs)
+            elif section == 'camera':
+                return self.config_manager.update_camera_config(**kwargs)
+            elif section == 'window':
+                return self.config_manager.update_window_config(**kwargs)
+            elif section == 'performance':
+                return self.config_manager.update_performance_config(**kwargs)
+            elif section == 'logging':
+                return self.config_manager.update_logging_config(**kwargs)
+            elif section == 'preferences':
+                return self.config_manager.update_user_preferences(**kwargs)
+            else:
+                self.log_warning(f"Unknown configuration section: {section}")
+                return False
+                
+        except Exception as e:
+            self.log_error(f"Error updating configuration: {str(e)}")
             return False 
