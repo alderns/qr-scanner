@@ -101,7 +101,6 @@ class MainWindow:
         # Add keyboard shortcuts
         self.root.bind('<Control-s>', lambda e: self._toggle_camera())
         self.root.bind('<Control-c>', lambda e: self._copy_last_scan())
-        self.root.bind('<Control-h>', lambda e: self._clear_history())
     
     def _create_header_section(self, parent):
         """Create a simplified header with just the title and essential status."""
@@ -168,11 +167,6 @@ class MainWindow:
                                   style='secondary',
                                   command=self._copy_last_scan)
         copy_button.pack(side=tk.LEFT, padx=(0, 10))
-        
-        clear_button = ModernButton(controls_frame, text="Clear History", 
-                                   style='warning',
-                                   command=self._clear_history)
-        clear_button.pack(side=tk.LEFT)
         
         # Last scan display (simplified)
         self.last_scan_text = tk.Text(main_frame, height=3, wrap=tk.WORD,
@@ -268,14 +262,6 @@ class MainWindow:
         self.video_frame.config(text="Camera stopped", image="")
         self.update_status("Camera stopped")
     
-    def _clear_history(self):
-        """Clear scan history."""
-        self.app_manager.clear_history()
-        if hasattr(self, 'history_tab'):
-            self.history_tab.clear_history()
-        self.last_scan_text.delete(1.0, tk.END)
-        self.update_status("History cleared")
-    
     def _copy_last_scan(self):
         """Copy the last scan to clipboard."""
         last_scan = self.app_manager.get_last_scan()
@@ -291,7 +277,7 @@ class MainWindow:
             self.video_frame.image = photo
     
     def process_scan(self, data, barcode_type):
-        """Process a new scan."""
+        """Process a new scan with enhanced user feedback."""
         # Update last scan text
         self.last_scan_text.delete(1.0, tk.END)
         self.last_scan_text.insert(1.0, data)
@@ -302,15 +288,28 @@ class MainWindow:
         if volunteer_info:
             first_name = volunteer_info['first_name']
             last_name = volunteer_info['last_name']
-            self.update_status(f"Found: {first_name} {last_name}")
+            # Welcome message for found volunteers
+            welcome_message = f"Welcome, {first_name} {last_name}! ✅"
+            self.update_status(welcome_message)
+            
+            # Show a brief notification (optional - could be enhanced with a popup)
+            self._show_welcome_notification(first_name, last_name)
+            
+            # Add to Google Sheets only if user is found
+            if self.app_manager.add_scan_data(data, barcode_type):
+                self.update_status(f"✅ {first_name} {last_name} - Checked in successfully")
+            else:
+                self.update_status(f"❌ Failed to add {first_name} {last_name} to sheets")
         else:
-            self.update_status(f"ID '{data}' not found in master list")
-        
-        # Add to Google Sheets
-        if self.app_manager.add_scan_data(data, barcode_type):
-            self.update_status(f"Added to sheets: {data}")
-        else:
-            self.update_status(f"Failed to add to sheets: {data}")
+            # User not found message
+            not_found_message = f"User not found ❌ (ID: {data})"
+            self.update_status(not_found_message)
+            
+            # Show a brief notification for not found users
+            self._show_not_found_notification(data)
+            
+            # Do not add to Google Sheets for users not found
+            self.update_status(f"⚠️ User not in master list - not added to sheets")
         
         # Add to history
         if hasattr(self, 'history_tab'):
@@ -319,6 +318,7 @@ class MainWindow:
                 first_name = volunteer_info['first_name']
                 last_name = volunteer_info['last_name']
                 display_name = f"{first_name} {last_name}"
+                status = "✅ Found"
             else:
                 try:
                     first_name, last_name = extract_names_from_qr_data(data)
@@ -327,12 +327,13 @@ class MainWindow:
                     display_name = f"{first_name} {last_name}"
                 except:
                     display_name = data
+                status = "❌ Not Found"
             
             self.history_tab.add_to_history(
                 time.strftime('%H:%M:%S'),
                 data,
                 display_name,
-                "Success" if volunteer_info else "Not Found",
+                status,
                 barcode_type
             )
     
@@ -348,3 +349,83 @@ class MainWindow:
             self.app_manager.stop_camera()
         self.app_manager.shutdown()
         self.root.destroy() 
+
+    def _show_welcome_notification(self, first_name, last_name):
+        """Show a welcome notification for found volunteers."""
+        try:
+            # Create a temporary notification window
+            notification = tk.Toplevel(self.root)
+            notification.title("Welcome!")
+            notification.geometry("300x150")
+            notification.configure(bg=THEME_COLORS['success'])
+            
+            # Remove window decorations (close, minimize, maximize buttons)
+            notification.overrideredirect(True)
+            
+            # Center the notification on screen
+            notification.update_idletasks()
+            x = (notification.winfo_screenwidth() // 2) - (300 // 2)
+            y = (notification.winfo_screenheight() // 2) - (150 // 2)
+            notification.geometry(f"300x150+{x}+{y}")
+            
+            # Make it transient and grab focus
+            notification.transient(self.root)
+            notification.grab_set()
+            
+            # Add welcome message
+            welcome_label = tk.Label(
+                notification, 
+                text=f"Welcome!\n{first_name} {last_name}",
+                font=('Segoe UI', 14, 'bold'),
+                fg='white',
+                bg=THEME_COLORS['success'],
+                wraplength=250
+            )
+            welcome_label.pack(expand=True)
+            
+            # Auto-close after 2 seconds
+            notification.after(2000, notification.destroy)
+            
+        except Exception as e:
+            # Fallback to just logging if notification fails
+            print(f"Welcome notification error: {e}")
+    
+    def _show_not_found_notification(self, volunteer_id):
+        """Show a notification for users not found in master list."""
+        try:
+            # Create a temporary notification window
+            notification = tk.Toplevel(self.root)
+            notification.title("User Not Found")
+            notification.geometry("300x150")
+            notification.configure(bg=THEME_COLORS['error'])
+            
+            # Remove window decorations (close, minimize, maximize buttons)
+            notification.overrideredirect(True)
+            
+            # Center the notification on screen
+            notification.update_idletasks()
+            x = (notification.winfo_screenwidth() // 2) - (300 // 2)
+            y = (notification.winfo_screenheight() // 2) - (150 // 2)
+            notification.geometry(f"300x150+{x}+{y}")
+            
+            # Make it transient and grab focus
+            notification.transient(self.root)
+            notification.grab_set()
+            
+            # Add not found message
+            not_found_label = tk.Label(
+                notification, 
+                text=f"User Not Found\nID: {volunteer_id}",
+                font=('Segoe UI', 14, 'bold'),
+                fg='white',
+                bg=THEME_COLORS['error'],
+                wraplength=250
+            )
+            not_found_label.pack(expand=True)
+            
+            # Auto-close after 2 seconds
+            notification.after(2000, notification.destroy)
+            
+        except Exception as e:
+            # Fallback to just logging if notification fails
+            print(f"Not found notification error: {e}") 

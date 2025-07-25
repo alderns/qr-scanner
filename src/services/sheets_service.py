@@ -28,6 +28,8 @@ class SheetConfig:
     spreadsheet_id: str
     sheet_name: str
     master_list_sheet: str = "MasterList"
+    master_list_spreadsheet_id: Optional[str] = None
+    master_list_sheet_name: Optional[str] = None
     credentials_file: Optional[str] = None
     token_file: Optional[str] = None
 
@@ -139,10 +141,10 @@ class GoogleSheetsService(LoggerMixin):
     
     def add_scan_data(self, scan_data: ScanData) -> bool:
         """
-        Add scan data to the Google Sheet.
+        Add scan data to Google Sheets.
         
         Args:
-            scan_data: Scan data to add
+            scan_data: ScanData object containing the scan information
             
         Returns:
             True if successful, False otherwise
@@ -150,6 +152,11 @@ class GoogleSheetsService(LoggerMixin):
         try:
             if not self.sheets_service:
                 raise SheetsError("Not connected to Google Sheets")
+            
+            # Only add to sheets if user is found (status is "Present")
+            if scan_data.status != "Present":
+                self.log_warning(f"User not found in master list - not adding to sheets: {scan_data.data}")
+                return False
             
             # Get current date and time
             now = datetime.now()
@@ -194,10 +201,14 @@ class GoogleSheetsService(LoggerMixin):
             if not self.sheets_service:
                 raise SheetsError("Not connected to Google Sheets")
             
+            # Use Master List specific configuration if available, otherwise use main config
+            master_spreadsheet_id = self.config.master_list_spreadsheet_id or self.config.spreadsheet_id
+            master_sheet_name = self.config.master_list_sheet_name or self.config.master_list_sheet
+            
             # Get all data from MasterList sheet
             result = self.sheets_service.spreadsheets().values().get(
-                spreadsheetId=self.config.spreadsheet_id,
-                range=f"{self.config.master_list_sheet}!A:Z"
+                spreadsheetId=master_spreadsheet_id,
+                range=f"{master_sheet_name}!A:Z"
             ).execute()
             
             values = result.get('values', [])
@@ -211,7 +222,7 @@ class GoogleSheetsService(LoggerMixin):
             self.master_list_data = values[1:] if len(values) > 1 else []
             
             count = len(self.master_list_data)
-            self.log_info(f"Loaded {count} records from master list")
+            self.log_info(f"Loaded {count} records from master list (spreadsheet: {master_spreadsheet_id}, sheet: {master_sheet_name})")
             
             return count
             

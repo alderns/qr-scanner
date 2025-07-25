@@ -23,6 +23,8 @@ class GoogleSheetsConfig:
     spreadsheet_id: str = DEFAULT_SPREADSHEET_ID
     sheet_name: str = DEFAULT_SHEET_NAME
     master_list_sheet: str = MASTER_LIST_SHEET
+    master_list_spreadsheet_id: str = DEFAULT_MASTER_LIST_SPREADSHEET_ID
+    master_list_sheet_name: str = DEFAULT_MASTER_LIST_SHEET_NAME
     credentials_file: str = CREDENTIALS_FILE
     token_file: str = TOKEN_FILE
     scopes: list = None
@@ -146,6 +148,20 @@ class ConfigManager(LoggerMixin):
     
     def get_google_sheets_config(self) -> GoogleSheetsConfig:
         """Get Google Sheets configuration."""
+        # Ensure we return a proper GoogleSheetsConfig object
+        if isinstance(self.config.google_sheets, dict):
+            # Convert dict to GoogleSheetsConfig object
+            google_sheets_dict = self.config.google_sheets.copy()
+            
+            # Ensure new Master List fields exist with defaults
+            if 'master_list_spreadsheet_id' not in google_sheets_dict:
+                google_sheets_dict['master_list_spreadsheet_id'] = DEFAULT_MASTER_LIST_SPREADSHEET_ID
+            if 'master_list_sheet_name' not in google_sheets_dict:
+                google_sheets_dict['master_list_sheet_name'] = DEFAULT_MASTER_LIST_SHEET_NAME
+            
+            # Create and return a new GoogleSheetsConfig object
+            return GoogleSheetsConfig(**google_sheets_dict)
+        
         return self.config.google_sheets
     
     def get_camera_config(self) -> CameraConfig:
@@ -175,6 +191,21 @@ class ConfigManager(LoggerMixin):
             True if successful, False otherwise
         """
         try:
+            # Ensure we have a proper GoogleSheetsConfig object
+            if isinstance(self.config.google_sheets, dict):
+                # Convert dict to GoogleSheetsConfig object
+                google_sheets_dict = self.config.google_sheets.copy()
+                
+                # Ensure new Master List fields exist with defaults
+                if 'master_list_spreadsheet_id' not in google_sheets_dict:
+                    google_sheets_dict['master_list_spreadsheet_id'] = DEFAULT_MASTER_LIST_SPREADSHEET_ID
+                if 'master_list_sheet_name' not in google_sheets_dict:
+                    google_sheets_dict['master_list_sheet_name'] = DEFAULT_MASTER_LIST_SHEET_NAME
+                
+                # Create a new GoogleSheetsConfig object
+                self.config.google_sheets = GoogleSheetsConfig(**google_sheets_dict)
+            
+            # Now update the configuration
             for key, value in kwargs.items():
                 if hasattr(self.config.google_sheets, key):
                     setattr(self.config.google_sheets, key, value)
@@ -445,6 +476,7 @@ class ConfigManager(LoggerMixin):
                 with open(self.config_file, 'r', encoding='utf-8') as f:
                     config_dict = json.load(f)
                 
+                self.log_debug(f"Loaded config dict: {config_dict}")
                 self._dict_to_config(config_dict)
                 self.log_info(f"Configuration loaded from {self.config_file}")
             else:
@@ -482,20 +514,49 @@ class ConfigManager(LoggerMixin):
     
     def _dict_to_config(self, config_dict: Dict[str, Any]):
         """Convert dictionary to configuration."""
+        self.log_debug(f"Converting dict to config: {config_dict}")
+        
         # Remove metadata
         config_dict.pop('_metadata', None)
         
         # Reconstruct configuration objects
         if 'google_sheets' in config_dict:
-            self.config.google_sheets = GoogleSheetsConfig(**config_dict['google_sheets'])
+            google_sheets_dict = config_dict['google_sheets']
+            self.log_debug(f"Processing google_sheets: {google_sheets_dict}")
+            
+            # Ensure new Master List fields exist with defaults
+            if 'master_list_spreadsheet_id' not in google_sheets_dict:
+                google_sheets_dict['master_list_spreadsheet_id'] = DEFAULT_MASTER_LIST_SPREADSHEET_ID
+            if 'master_list_sheet_name' not in google_sheets_dict:
+                google_sheets_dict['master_list_sheet_name'] = DEFAULT_MASTER_LIST_SHEET_NAME
+            
+            # Create a new GoogleSheetsConfig object
+            self.config.google_sheets = GoogleSheetsConfig(**google_sheets_dict)
+            self.log_debug(f"Created GoogleSheetsConfig: {self.config.google_sheets}")
+        else:
+            # If no google_sheets config, create default
+            self.config.google_sheets = GoogleSheetsConfig()
+            self.log_debug("Created default GoogleSheetsConfig")
+            
         if 'camera' in config_dict:
             self.config.camera = CameraConfig(**config_dict['camera'])
+        else:
+            self.config.camera = CameraConfig()
+            
         if 'window' in config_dict:
             self.config.window = WindowConfig(**config_dict['window'])
+        else:
+            self.config.window = WindowConfig()
+            
         if 'performance' in config_dict:
             self.config.performance = PerformanceConfig(**config_dict['performance'])
+        else:
+            self.config.performance = PerformanceConfig()
+            
         if 'logging' in config_dict:
             self.config.logging = LoggingConfig(**config_dict['logging'])
+        else:
+            self.config.logging = LoggingConfig()
         
         # Update other attributes
         for key, value in config_dict.items():

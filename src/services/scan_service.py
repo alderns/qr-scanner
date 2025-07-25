@@ -28,6 +28,9 @@ class ScanResult:
     status: str
     volunteer_info: Optional[Dict[str, str]] = None
     error_message: Optional[str] = None
+    user_found: bool = False
+    welcome_message: Optional[str] = None
+    not_found_message: Optional[str] = None
 
 
 class ScanService(LoggerMixin):
@@ -74,7 +77,18 @@ class ScanService(LoggerMixin):
             timestamp = datetime.now().strftime("%I:%M:%S %p")
             
             # Process volunteer information
-            volunteer_info, formatted_name, first_name, last_name = self._process_volunteer_data(data)
+            volunteer_info, formatted_name, first_name, last_name, user_found = self._process_volunteer_data(data)
+            
+            # Create welcome/not found messages
+            welcome_message = None
+            not_found_message = None
+            
+            if user_found and volunteer_info:
+                welcome_message = f"Welcome, {first_name} {last_name}! ✅"
+                status = "Present"
+            else:
+                not_found_message = f"User not found ❌ (ID: {data})"
+                status = "Not Found"
             
             # Create scan result
             result = ScanResult(
@@ -85,11 +99,14 @@ class ScanService(LoggerMixin):
                 formatted_name=formatted_name,
                 first_name=first_name,
                 last_name=last_name,
-                status="Present",
-                volunteer_info=volunteer_info
+                status=status,
+                volunteer_info=volunteer_info,
+                user_found=user_found,
+                welcome_message=welcome_message,
+                not_found_message=not_found_message
             )
             
-            self.log_info(f"Processed scan: {data} -> {formatted_name}")
+            self.log_info(f"Processed scan: {data} -> {formatted_name} (Found: {user_found})")
             return result
             
         except Exception as e:
@@ -103,10 +120,12 @@ class ScanService(LoggerMixin):
                 first_name="",
                 last_name="",
                 status="Error",
-                error_message=str(e)
+                error_message=str(e),
+                user_found=False,
+                not_found_message=f"Error processing scan: {str(e)}"
             )
     
-    def _process_volunteer_data(self, data: str) -> Tuple[Optional[Dict[str, str]], str, str, str]:
+    def _process_volunteer_data(self, data: str) -> Tuple[Optional[Dict[str, str]], str, str, str, bool]:
         """
         Process volunteer data and extract name information.
         
@@ -114,19 +133,18 @@ class ScanService(LoggerMixin):
             data: Raw scan data
             
         Returns:
-            Tuple of (volunteer_info, formatted_name, first_name, last_name)
+            Tuple of (volunteer_info, formatted_name, first_name, last_name, user_found)
         """
-        # Try to lookup volunteer in master list first
+        user_found = False
         volunteer_info = None
+        
+        # Try to lookup volunteer in master list first
         if self.volunteer_service:
             volunteer_info = self.volunteer_service.lookup_volunteer(data)
+            user_found = bool(volunteer_info)
+            self.log_info(f"Lookup in volunteer service: Found volunteer: {user_found}")
         
-        if volunteer_info:
-            # Use names from master list
-            first_name = volunteer_info['first_name']
-            last_name = volunteer_info['last_name']
-            self.log_info(f"Found volunteer in master list: {first_name} {last_name}")
-        else:
+        if not user_found:
             # Check if QR data is already in "last name, first name" format
             if self._is_name_format(data):
                 # QR data appears to be a name in "last, first" format, use it directly
@@ -140,11 +158,16 @@ class ScanService(LoggerMixin):
                 first_name = clean_name(first_name)
                 last_name = clean_name(last_name)
                 self.log_warning(f"Volunteer ID '{data}' not found in master list, using extracted names: {first_name} {last_name}")
+        else:
+            # If found in volunteer service, use its names
+            first_name = volunteer_info['first_name']
+            last_name = volunteer_info['last_name']
+            self.log_info(f"Found volunteer in master list: {first_name} {last_name}")
         
         # Format name as "last name, first name"
         formatted_name = f"{last_name}, {first_name}" if last_name and first_name else f"{first_name}{last_name}"
         
-        return volunteer_info, formatted_name, first_name, last_name
+        return volunteer_info, formatted_name, first_name, last_name, user_found
     
     def _is_name_format(self, data: str) -> bool:
         """

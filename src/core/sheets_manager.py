@@ -273,46 +273,32 @@ class GoogleSheetsManager:
                 logger.info(f"Found volunteer in master list: {first_name} {last_name}")
                 # Format name as "last name, first name"
                 formatted_name = f"{last_name}, {first_name}" if last_name and first_name else f"{first_name}{last_name}"
+                
+                # Set status for found users
+                status = "Present"
+                
+                # Prepare the data: [ID Number, Date, Time In, Name, Status]
+                values = [[data, date_str, time_str, formatted_name, status]]
+                
+                # Append to the sheet
+                body = {
+                    'values': values
+                }
+                
+                result = self.sheets_service.spreadsheets().values().append(
+                    spreadsheetId=self.spreadsheet_id,
+                    range=f"{self.sheet_name}!A:E",
+                    valueInputOption='RAW',
+                    insertDataOption='INSERT_ROWS',
+                    body=body
+                ).execute()
+                
+                logger.info(f"Added scan data to sheets: {data} (Name: {first_name} {last_name})")
+                return True
             else:
-                # Check if QR data is already in "last name, first name" format
-                if ',' in data and not any(char in data for char in ['@', 'http', 'www', '.com', '.org']):
-                    # QR data appears to be a name in "last, first" format, use it directly
-                    formatted_name = data.strip()
-                    logger.info(f"Using QR data directly as name: {formatted_name}")
-                else:
-                    # Fallback to extracting names from QR data if not found in master list
-                    logger.debug(f"QR data for name extraction: '{data}'")
-                    first_name, last_name = extract_names_from_qr_data(data)
-                    first_name = clean_name(first_name)
-                    last_name = clean_name(last_name)
-                    logger.warning(f"Volunteer ID '{data}' not found in master list, using extracted names: {first_name} {last_name}")
-                    logger.debug(f"Extracted first_name: '{first_name}', last_name: '{last_name}'")
-                    # Format name as "last name, first name"
-                    formatted_name = f"{last_name}, {first_name}" if last_name and first_name else f"{first_name}{last_name}"
-            
-            logger.debug(f"Final formatted name: '{formatted_name}'")
-            
-            # Set status (you can customize this based on your needs)
-            status = "Present"
-            
-            # Prepare the data: [ID Number, Date, Time In, Name, Status]
-            values = [[data, date_str, time_str, formatted_name, status]]
-            
-            # Append to the sheet
-            body = {
-                'values': values
-            }
-            
-            result = self.sheets_service.spreadsheets().values().append(
-                spreadsheetId=self.spreadsheet_id,
-                range=f"{self.sheet_name}!A:E",
-                valueInputOption='RAW',
-                insertDataOption='INSERT_ROWS',
-                body=body
-            ).execute()
-            
-            logger.info(f"Added scan data to sheets: {data} (Name: {first_name} {last_name})")
-            return True
+                # User not found in master list - do not add to sheets
+                logger.warning(f"Volunteer ID '{data}' not found in master list - not adding to sheets")
+                return False
             
         except Exception as e:
             logger.error(f"Error adding scan data: {str(e)}")
@@ -325,9 +311,12 @@ class GoogleSheetsManager:
             return 0
         
         try:
+            # Use Master List specific spreadsheet ID if configured, otherwise use main spreadsheet
+            master_spreadsheet_id = getattr(self, 'master_list_spreadsheet_id', None) or self.spreadsheet_id
+            
             # Get all data from MasterList sheet
             result = self.sheets_service.spreadsheets().values().get(
-                spreadsheetId=self.spreadsheet_id,
+                spreadsheetId=master_spreadsheet_id,
                 range=f"{self.master_list_sheet}!A:Z"
             ).execute()
             
@@ -342,7 +331,7 @@ class GoogleSheetsManager:
             self.master_list_data = values[1:] if len(values) > 1 else []
             
             count = len(self.master_list_data)
-            logger.info(f"Loaded {count} records from master list")
+            logger.info(f"Loaded {count} records from master list (spreadsheet: {master_spreadsheet_id})")
             
             # Debug: Log the headers and first few rows to understand the structure
             if count > 0:
@@ -355,6 +344,25 @@ class GoogleSheetsManager:
         except Exception as e:
             logger.error(f"Error loading master list: {str(e)}")
             return 0
+    
+    def update_master_list_config(self, spreadsheet_id: str, sheet_name: str):
+        """
+        Update the Master List configuration.
+        
+        Args:
+            spreadsheet_id: Master List spreadsheet ID
+            sheet_name: Master List sheet name
+        """
+        try:
+            # Store the new configuration
+            self.master_list_spreadsheet_id = spreadsheet_id
+            self.master_list_sheet = sheet_name
+            
+            logger.info(f"Updated Master List config: {spreadsheet_id}/{sheet_name}")
+            
+        except Exception as e:
+            logger.error(f"Error updating Master List config: {str(e)}")
+            raise
     
     def search_master_list(self, search_term):
         """Search the master list for a specific term."""

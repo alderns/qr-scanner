@@ -6,8 +6,8 @@ import tkinter as tk
 from tkinter import ttk, filedialog, messagebox
 from typing import Dict, Any
 
-from ...config.theme import THEME_COLORS, HEADER_FONT, NORMAL_FONT, COMPONENT_SPACING
-from ...config.settings import DEFAULT_SPREADSHEET_ID, DEFAULT_SHEET_NAME
+from ...config.theme import THEME_COLORS, HEADER_FONT, NORMAL_FONT, COMPONENT_SPACING, TITLE_FONT, SUBTITLE_FONT
+from ...config.settings import DEFAULT_SPREADSHEET_ID, DEFAULT_SHEET_NAME, DEFAULT_MASTER_LIST_SPREADSHEET_ID, DEFAULT_MASTER_LIST_SHEET_NAME
 from ..components import ModernButton, StatusIndicator
 
 
@@ -24,115 +24,181 @@ class SettingsTab:
         self.parent.after(100, self._check_initial_status)
     
     def _create_settings_interface(self):
-        """Create a simplified settings interface."""
-        # Main container
-        main_frame = tk.Frame(self.parent, bg=THEME_COLORS['background'])
-        main_frame.pack(fill=tk.BOTH, expand=True, padx=20, pady=20)
+        """Create a well-spaced and organized settings interface."""
+        # Main container with scrollable content
+        main_container = tk.Frame(self.parent, bg=THEME_COLORS['background'])
+        main_container.pack(fill=tk.BOTH, expand=True)
         
-        # Google Sheets section (simplified)
-        sheets_frame = tk.Frame(main_frame, bg=THEME_COLORS['surface'], 
-                               relief='solid', borderwidth=1,
-                               highlightbackground=THEME_COLORS['border'],
-                               highlightcolor=THEME_COLORS['border'])
-        sheets_frame.pack(fill=tk.X, pady=(0, 20))
+        # Create a canvas for scrolling
+        canvas = tk.Canvas(main_container, bg=THEME_COLORS['background'], highlightthickness=0)
+        scrollbar = ttk.Scrollbar(main_container, orient="vertical", command=canvas.yview)
+        scrollable_frame = tk.Frame(canvas, bg=THEME_COLORS['background'])
         
-        # Title
-        title_label = tk.Label(sheets_frame, text="Google Sheets Setup", 
+        # Configure the canvas to expand with the frame
+        scrollable_frame.bind(
+            "<Configure>",
+            lambda e: canvas.configure(scrollregion=canvas.bbox("all"))
+        )
+        
+        # Bind mouse wheel to canvas
+        def _on_mousewheel(event):
+            canvas.yview_scroll(int(-1*(event.delta/120)), "units")
+        
+        # Bind mouse wheel events
+        canvas.bind("<MouseWheel>", _on_mousewheel)
+        scrollable_frame.bind("<MouseWheel>", _on_mousewheel)
+        
+        # Create window in canvas and configure it to expand
+        canvas_window = canvas.create_window((0, 0), window=scrollable_frame, anchor="nw")
+        
+        # Configure canvas to expand with the frame
+        def _configure_canvas(event):
+            # Update the canvas window width to match the canvas width
+            canvas.itemconfig(canvas_window, width=event.width)
+        
+        canvas.bind('<Configure>', _configure_canvas)
+        canvas.configure(yscrollcommand=scrollbar.set)
+        
+        # Pack the canvas and scrollbar
+        canvas.pack(side="left", fill="both", expand=True)
+        scrollbar.pack(side="right", fill="y")
+        
+        # Main content frame with same padding as scanner tab
+        main_frame = tk.Frame(scrollable_frame, bg=THEME_COLORS['background'])
+        main_frame.pack(fill=tk.BOTH, expand=True, padx=COMPONENT_SPACING['card_padding'], 
+                       pady=COMPONENT_SPACING['card_padding'])
+        
+        # Google Sheets section
+        self._create_google_sheets_section(main_frame)
+        
+        # Master List section
+        self._create_master_list_section(main_frame)
+    
+    def _create_google_sheets_section(self, parent):
+        """Create the Google Sheets configuration section."""
+        # Section container
+        section_frame = tk.Frame(parent, bg=THEME_COLORS['surface'], 
+                                relief='solid', borderwidth=1,
+                                highlightbackground=THEME_COLORS['border'],
+                                highlightcolor=THEME_COLORS['border'])
+        section_frame.pack(fill=tk.X, pady=(0, COMPONENT_SPACING['card_margin']))
+        
+        # Section header
+        header_frame = tk.Frame(section_frame, bg=THEME_COLORS['surface'])
+        header_frame.pack(fill=tk.X, padx=COMPONENT_SPACING['card_padding'], 
+                         pady=COMPONENT_SPACING['header_padding'])
+        
+        title_label = tk.Label(header_frame, text="Google Sheets Setup", 
                               font=HEADER_FONT, fg=THEME_COLORS['text'], 
                               bg=THEME_COLORS['surface'])
-        title_label.pack(pady=15)
+        title_label.pack(anchor=tk.W)
+        
+        desc_label = tk.Label(header_frame, text="Configure your Google Sheets connection for storing scan data", 
+                             font=NORMAL_FONT, fg=THEME_COLORS['text_secondary'], 
+                             bg=THEME_COLORS['surface'])
+        desc_label.pack(anchor=tk.W, pady=(4, 0))
+        
+        # Credentials section
+        cred_frame = tk.Frame(section_frame, bg=THEME_COLORS['surface'])
+        cred_frame.pack(fill=tk.X, padx=COMPONENT_SPACING['card_padding'], 
+                       pady=(0, COMPONENT_SPACING['card_padding']))
         
         # Credentials status
-        self.credentials_status = StatusIndicator(sheets_frame, "Checking credentials...", "neutral")
-        self.credentials_status.pack(pady=(0, 15))
+        self.credentials_status = StatusIndicator(cred_frame, "Checking credentials...", "neutral")
+        self.credentials_status.pack(anchor=tk.W, pady=(0, 12))
         
         # Setup credentials button
-        self.credentials_button = ModernButton(sheets_frame, text="Setup Credentials", 
+        self.credentials_button = ModernButton(cred_frame, text="Setup Credentials", 
                                               style='warning',
                                               command=self._setup_credentials)
-        self.credentials_button.pack(pady=(0, 15))
+        self.credentials_button.pack(anchor=tk.W, pady=(0, COMPONENT_SPACING['card_padding']))
         
-        # Connection fields
-        conn_frame = tk.Frame(sheets_frame, bg=THEME_COLORS['surface'])
-        conn_frame.pack(fill=tk.X, padx=20, pady=(0, 15))
+        # Connection configuration section
+        conn_frame = tk.Frame(section_frame, bg=THEME_COLORS['surface'])
+        conn_frame.pack(fill=tk.X, padx=COMPONENT_SPACING['card_padding'], 
+                       pady=(0, COMPONENT_SPACING['card_padding']))
         
-        # Spreadsheet ID
-        tk.Label(conn_frame, text="Spreadsheet ID:", font=NORMAL_FONT,
-                fg=THEME_COLORS['text'], bg=THEME_COLORS['surface']).pack(anchor=tk.W)
+        # Section divider
+        divider = tk.Frame(conn_frame, height=1, bg=THEME_COLORS['border'])
+        divider.pack(fill=tk.X, pady=(0, COMPONENT_SPACING['card_padding']))
         
-        # Spreadsheet ID frame with edit button
-        spreadsheet_frame = tk.Frame(conn_frame, bg=THEME_COLORS['surface'])
-        spreadsheet_frame.pack(fill=tk.X, pady=(5, 10))
+        # Spreadsheet configuration
+        self._create_field_group(conn_frame, "Spreadsheet ID", DEFAULT_SPREADSHEET_ID, 
+                                self._toggle_spreadsheet_edit, "spreadsheet")
         
-        self.spreadsheet_entry = tk.Entry(spreadsheet_frame, font=NORMAL_FONT, 
-                                         bg=THEME_COLORS['surface'], fg=THEME_COLORS['text'],
-                                         relief='solid', borderwidth=1,
-                                         highlightbackground=THEME_COLORS['border'],
-                                         highlightcolor=THEME_COLORS['border'])
-        self.spreadsheet_entry.insert(0, DEFAULT_SPREADSHEET_ID)
-        self.spreadsheet_entry.configure(state='readonly')
-        # Prevent text selection in readonly mode
-        self.spreadsheet_entry.bind('<Button-1>', lambda e: 'break' if self.spreadsheet_entry.cget('state') == 'readonly' else None)
-        self.spreadsheet_entry.bind('<B1-Motion>', lambda e: 'break' if self.spreadsheet_entry.cget('state') == 'readonly' else None)
-        self.spreadsheet_entry.pack(side=tk.LEFT, fill=tk.X, expand=True)
-        
-        self.edit_spreadsheet_btn = ModernButton(spreadsheet_frame, text="Edit", 
-                                                style='secondary',
-                                                command=self._toggle_spreadsheet_edit)
-        self.edit_spreadsheet_btn.pack(side=tk.RIGHT, padx=(5, 0))
-        
-        # Sheet name
-        tk.Label(conn_frame, text="Sheet Name:", font=NORMAL_FONT,
-                fg=THEME_COLORS['text'], bg=THEME_COLORS['surface']).pack(anchor=tk.W)
-        
-        # Sheet name frame with edit button
-        sheet_name_frame = tk.Frame(conn_frame, bg=THEME_COLORS['surface'])
-        sheet_name_frame.pack(fill=tk.X, pady=(5, 10))
-        
-        self.sheet_name_entry = tk.Entry(sheet_name_frame, font=NORMAL_FONT,
-                                        bg=THEME_COLORS['surface'], fg=THEME_COLORS['text'],
-                                        relief='solid', borderwidth=1,
-                                        highlightbackground=THEME_COLORS['border'],
-                                        highlightcolor=THEME_COLORS['border'])
-        self.sheet_name_entry.insert(0, DEFAULT_SHEET_NAME)
-        self.sheet_name_entry.configure(state='readonly')
-        self.sheet_name_entry.pack(side=tk.LEFT, fill=tk.X, expand=True)
-        
-        self.edit_sheet_name_btn = ModernButton(sheet_name_frame, text="Edit", 
-                                               style='secondary',
-                                               command=self._toggle_sheet_name_edit)
-        self.edit_sheet_name_btn.pack(side=tk.RIGHT, padx=(5, 0))
+        self._create_field_group(conn_frame, "Sheet Name", DEFAULT_SHEET_NAME, 
+                                self._toggle_sheet_name_edit, "sheet_name")
         
         # Connect button
-        self.connect_button = ModernButton(conn_frame, text="Connect", 
+        button_frame = tk.Frame(conn_frame, bg=THEME_COLORS['surface'])
+        button_frame.pack(fill=tk.X, pady=(16, 0))
+        
+        self.connect_button = ModernButton(button_frame, text="Connect to Google Sheets", 
                                           style='success',
                                           command=self._connect_to_sheets)
-        self.connect_button.pack(anchor=tk.W, pady=(5, 0))
+        self.connect_button.pack(anchor=tk.W)
         
         # Connection status
-        self.sheets_status = StatusIndicator(sheets_frame, "Not connected", "error")
-        self.sheets_status.pack(pady=(0, 15))
+        status_frame = tk.Frame(section_frame, bg=THEME_COLORS['surface'])
+        status_frame.pack(fill=tk.X, padx=COMPONENT_SPACING['card_padding'], 
+                         pady=(0, COMPONENT_SPACING['card_padding']))
         
-        # Master List section (simplified)
-        master_frame = tk.Frame(main_frame, bg=THEME_COLORS['surface'], 
-                               relief='solid', borderwidth=1,
-                               highlightbackground=THEME_COLORS['border'],
-                               highlightcolor=THEME_COLORS['border'])
-        master_frame.pack(fill=tk.X)
+        self.sheets_status = StatusIndicator(status_frame, "Not connected", "error")
+        self.sheets_status.pack(anchor=tk.W)
+    
+    def _create_master_list_section(self, parent):
+        """Create the Master List configuration section."""
+        # Section container
+        section_frame = tk.Frame(parent, bg=THEME_COLORS['surface'], 
+                                relief='solid', borderwidth=1,
+                                highlightbackground=THEME_COLORS['border'],
+                                highlightcolor=THEME_COLORS['border'])
+        section_frame.pack(fill=tk.X, pady=(0, COMPONENT_SPACING['card_margin']))
         
-        # Title
-        master_title = tk.Label(master_frame, text="Master List", 
-                               font=HEADER_FONT, fg=THEME_COLORS['text'], 
-                               bg=THEME_COLORS['surface'])
-        master_title.pack(pady=15)
+        # Section header
+        header_frame = tk.Frame(section_frame, bg=THEME_COLORS['surface'])
+        header_frame.pack(fill=tk.X, padx=COMPONENT_SPACING['card_padding'], 
+                         pady=COMPONENT_SPACING['header_padding'])
         
-        # Controls
-        controls_frame = tk.Frame(master_frame, bg=THEME_COLORS['surface'])
-        controls_frame.pack(fill=tk.X, padx=20, pady=(0, 15))
+        title_label = tk.Label(header_frame, text="Master List Configuration", 
+                              font=HEADER_FONT, fg=THEME_COLORS['text'], 
+                              bg=THEME_COLORS['surface'])
+        title_label.pack(anchor=tk.W)
+        
+        desc_label = tk.Label(header_frame, text="Configure the source for your Master List data", 
+                             font=NORMAL_FONT, fg=THEME_COLORS['text_secondary'], 
+                             bg=THEME_COLORS['surface'])
+        desc_label.pack(anchor=tk.W, pady=(4, 0))
+        
+        # Configuration fields
+        config_frame = tk.Frame(section_frame, bg=THEME_COLORS['surface'])
+        config_frame.pack(fill=tk.X, padx=COMPONENT_SPACING['card_padding'], 
+                         pady=(0, COMPONENT_SPACING['card_padding']))
+        
+        # Master List fields
+        self._create_field_group(config_frame, "Master List Spreadsheet ID", 
+                                DEFAULT_MASTER_LIST_SPREADSHEET_ID, 
+                                self._toggle_master_spreadsheet_edit, "master_spreadsheet")
+        
+        self._create_field_group(config_frame, "Master List Sheet Name", 
+                                DEFAULT_MASTER_LIST_SHEET_NAME, 
+                                self._toggle_master_sheet_name_edit, "master_sheet_name")
+        
+        # Controls section
+        controls_frame = tk.Frame(section_frame, bg=THEME_COLORS['surface'])
+        controls_frame.pack(fill=tk.X, padx=COMPONENT_SPACING['card_padding'], 
+                           pady=(0, COMPONENT_SPACING['card_padding']))
+        
+        # Section divider
+        divider = tk.Frame(controls_frame, height=1, bg=THEME_COLORS['border'])
+        divider.pack(fill=tk.X, pady=(0, 16))
         
         # Auto-load checkbox
+        checkbox_frame = tk.Frame(controls_frame, bg=THEME_COLORS['surface'])
+        checkbox_frame.pack(fill=tk.X, pady=(0, 16))
+        
         self.auto_load_var = tk.BooleanVar(value=True)
-        auto_load_check = tk.Checkbutton(controls_frame, text="Auto-load on startup", 
+        auto_load_check = tk.Checkbutton(checkbox_frame, text="Auto-load Master List on startup", 
                                         variable=self.auto_load_var, 
                                         command=self._update_auto_load_setting,
                                         font=NORMAL_FONT, bg=THEME_COLORS['surface'],
@@ -140,14 +206,60 @@ class SettingsTab:
         auto_load_check.pack(side=tk.LEFT)
         
         # Load button
-        load_button = ModernButton(controls_frame, text="Load Now", 
+        button_frame = tk.Frame(controls_frame, bg=THEME_COLORS['surface'])
+        button_frame.pack(fill=tk.X)
+        
+        load_button = ModernButton(button_frame, text="Load Master List Now", 
                                   style='secondary',
                                   command=self._load_master_list)
-        load_button.pack(side=tk.RIGHT)
+        load_button.pack(anchor=tk.W)
         
         # Status
-        self.master_list_status = StatusIndicator(master_frame, "Not loaded", "neutral")
-        self.master_list_status.pack(pady=(0, 15))
+        status_frame = tk.Frame(section_frame, bg=THEME_COLORS['surface'])
+        status_frame.pack(fill=tk.X, padx=COMPONENT_SPACING['card_padding'], 
+                         pady=(0, COMPONENT_SPACING['card_padding']))
+        
+        self.master_list_status = StatusIndicator(status_frame, "Not loaded", "neutral")
+        self.master_list_status.pack(anchor=tk.W)
+    
+    def _create_field_group(self, parent, label_text, default_value, toggle_command, field_name):
+        """Create a reusable field group with label, entry, and edit button."""
+        # Field container
+        field_frame = tk.Frame(parent, bg=THEME_COLORS['surface'])
+        field_frame.pack(fill=tk.X, pady=(0, 16))
+        
+        # Label
+        label = tk.Label(field_frame, text=f"{label_text}:", font=NORMAL_FONT,
+                        fg=THEME_COLORS['text'], bg=THEME_COLORS['surface'])
+        label.pack(anchor=tk.W, pady=(0, 8))
+        
+        # Entry and button frame
+        entry_frame = tk.Frame(field_frame, bg=THEME_COLORS['surface'])
+        entry_frame.pack(fill=tk.X)
+        
+        # Entry field
+        entry = tk.Entry(entry_frame, font=NORMAL_FONT, 
+                        bg=THEME_COLORS['surface'], fg=THEME_COLORS['text'],
+                        relief='solid', borderwidth=1,
+                        highlightbackground=THEME_COLORS['border'],
+                        highlightcolor=THEME_COLORS['border'])
+        entry.insert(0, default_value)
+        entry.configure(state='readonly')
+        
+        # Prevent text selection in readonly mode
+        entry.bind('<Button-1>', lambda e: 'break' if entry.cget('state') == 'readonly' else None)
+        entry.bind('<B1-Motion>', lambda e: 'break' if entry.cget('state') == 'readonly' else None)
+        entry.pack(side=tk.LEFT, fill=tk.X, expand=True)
+        
+        # Edit button
+        edit_btn = ModernButton(entry_frame, text="Edit", 
+                               style='secondary',
+                               command=toggle_command)
+        edit_btn.pack(side=tk.RIGHT, padx=(8, 0))
+        
+        # Store references
+        setattr(self, f"{field_name}_entry", entry)
+        setattr(self, f"edit_{field_name}_btn", edit_btn)
     
     def _check_initial_status(self):
         """Check initial status of credentials and connection."""
@@ -329,10 +441,21 @@ class SettingsTab:
             messagebox.showwarning("Not Connected", "Please connect to Google Sheets first!")
             return
         
+        # Get Master List configuration from the UI
+        master_spreadsheet_id = self.master_spreadsheet_entry.get().strip()
+        master_sheet_name = self.master_sheet_name_entry.get().strip()
+        
+        if not master_spreadsheet_id or not master_sheet_name:
+            messagebox.showwarning("Invalid Input", "Please enter both Master List Spreadsheet ID and Sheet Name")
+            return
+        
         if self.callbacks.get('update_status'):
             self.callbacks['update_status']("Loading master list...")
         
         try:
+            # Update the app_manager with the Master List configuration
+            self.app_manager.update_master_list_config(master_spreadsheet_id, master_sheet_name)
+            
             count = self.app_manager.load_master_list()
             if count > 0:
                 self.master_list_status.set_status('success')
@@ -369,6 +492,14 @@ class SettingsTab:
             if self.callbacks.get('update_status'):
                 self.callbacks['update_status']("Auto-loading master list...")
             
+            # Get Master List configuration from the UI
+            master_spreadsheet_id = self.master_spreadsheet_entry.get().strip()
+            master_sheet_name = self.master_sheet_name_entry.get().strip()
+            
+            # Update the app_manager with the Master List configuration
+            if master_spreadsheet_id and master_sheet_name:
+                self.app_manager.update_master_list_config(master_spreadsheet_id, master_sheet_name)
+            
             count = self.app_manager.load_master_list()
             if count > 0:
                 self.master_list_status.set_status('success')
@@ -398,36 +529,88 @@ class SettingsTab:
     
     def _toggle_spreadsheet_edit(self):
         """Toggle spreadsheet ID field between readonly and editable."""
-        if self.spreadsheet_entry.cget('state') == 'readonly':
+        entry = self.spreadsheet_entry
+        btn = self.edit_spreadsheet_btn
+        
+        if entry.cget('state') == 'readonly':
             # Store current value before enabling edit
-            current_value = self.spreadsheet_entry.get()
-            self.spreadsheet_entry.configure(state='normal')
-            self.spreadsheet_entry.delete(0, tk.END)
-            self.spreadsheet_entry.insert(0, current_value)
-            self.edit_spreadsheet_btn.configure(text="Save")
+            current_value = entry.get()
+            entry.configure(state='normal')
+            entry.delete(0, tk.END)
+            entry.insert(0, current_value)
+            btn.configure(text="Save")
         else:
             # Store current value before making readonly
-            current_value = self.spreadsheet_entry.get()
-            self.spreadsheet_entry.configure(state='readonly')
-            self.spreadsheet_entry.delete(0, tk.END)
-            self.spreadsheet_entry.insert(0, current_value)
+            current_value = entry.get()
+            entry.configure(state='readonly')
+            entry.delete(0, tk.END)
+            entry.insert(0, current_value)
             # Clear any text selection to remove highlighting
-            self.spreadsheet_entry.selection_clear()
-            self.edit_spreadsheet_btn.configure(text="Edit")
+            entry.selection_clear()
+            btn.configure(text="Edit")
     
     def _toggle_sheet_name_edit(self):
         """Toggle sheet name field between readonly and editable."""
-        if self.sheet_name_entry.cget('state') == 'readonly':
+        entry = self.sheet_name_entry
+        btn = self.edit_sheet_name_btn
+        
+        if entry.cget('state') == 'readonly':
             # Store current value before enabling edit
-            current_value = self.sheet_name_entry.get()
-            self.sheet_name_entry.configure(state='normal')
-            self.sheet_name_entry.delete(0, tk.END)
-            self.sheet_name_entry.insert(0, current_value)
-            self.edit_sheet_name_btn.configure(text="Save")
+            current_value = entry.get()
+            entry.configure(state='normal')
+            entry.delete(0, tk.END)
+            entry.insert(0, current_value)
+            btn.configure(text="Save")
         else:
             # Store current value before making readonly
-            current_value = self.sheet_name_entry.get()
-            self.sheet_name_entry.configure(state='readonly')
-            self.sheet_name_entry.delete(0, tk.END)
-            self.sheet_name_entry.insert(0, current_value)
-            self.edit_sheet_name_btn.configure(text="Edit") 
+            current_value = entry.get()
+            entry.configure(state='readonly')
+            entry.delete(0, tk.END)
+            entry.insert(0, current_value)
+            # Clear any text selection to remove highlighting
+            entry.selection_clear()
+            btn.configure(text="Edit")
+    
+    def _toggle_master_spreadsheet_edit(self):
+        """Toggle master list spreadsheet ID field between readonly and editable."""
+        entry = self.master_spreadsheet_entry
+        btn = self.edit_master_spreadsheet_btn
+        
+        if entry.cget('state') == 'readonly':
+            # Store current value before enabling edit
+            current_value = entry.get()
+            entry.configure(state='normal')
+            entry.delete(0, tk.END)
+            entry.insert(0, current_value)
+            btn.configure(text="Save")
+        else:
+            # Store current value before making readonly
+            current_value = entry.get()
+            entry.configure(state='readonly')
+            entry.delete(0, tk.END)
+            entry.insert(0, current_value)
+            # Clear any text selection to remove highlighting
+            entry.selection_clear()
+            btn.configure(text="Edit")
+    
+    def _toggle_master_sheet_name_edit(self):
+        """Toggle master list sheet name field between readonly and editable."""
+        entry = self.master_sheet_name_entry
+        btn = self.edit_master_sheet_name_btn
+        
+        if entry.cget('state') == 'readonly':
+            # Store current value before enabling edit
+            current_value = entry.get()
+            entry.configure(state='normal')
+            entry.delete(0, tk.END)
+            entry.insert(0, current_value)
+            btn.configure(text="Save")
+        else:
+            # Store current value before making readonly
+            current_value = entry.get()
+            entry.configure(state='readonly')
+            entry.delete(0, tk.END)
+            entry.insert(0, current_value)
+            # Clear any text selection to remove highlighting
+            entry.selection_clear()
+            btn.configure(text="Edit") 

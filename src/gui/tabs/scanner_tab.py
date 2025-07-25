@@ -158,14 +158,23 @@ class ScannerTab:
         
         if scan_result.success:
             # Update status based on scan result
-            if scan_result.volunteer_info:
-                first_name = scan_result.first_name
-                last_name = scan_result.last_name
+            if scan_result.user_found and scan_result.volunteer_info:
+                # User found in master list - show welcome message
                 if self.callbacks.get('update_status'):
-                    self.callbacks['update_status'](f"Found volunteer: {first_name} {last_name}")
+                    self.callbacks['update_status'](scan_result.welcome_message or f"Welcome, {scan_result.first_name} {scan_result.last_name}! ✅")
+                
+                # Add to Google Sheets only if user is found
+                if self.app_manager.add_scan_data_via_service(data, barcode_type):
+                    final_message = f"✅ {scan_result.first_name} {scan_result.last_name} - Checked in successfully"
+                else:
+                    final_message = f"❌ Failed to add {scan_result.first_name} {scan_result.last_name} to sheets"
             else:
+                # User not found in master list
                 if self.callbacks.get('update_status'):
-                    self.callbacks['update_status'](f"Volunteer ID '{data}' not found in master list")
+                    self.callbacks['update_status'](scan_result.not_found_message or f"User not found ❌ (ID: {data})")
+                
+                # Do not add to Google Sheets for users not found
+                final_message = f"⚠️ User not in master list - not added to sheets"
             
             # Call the history callback if available
             if self.callbacks.get('add_to_history'):
@@ -181,16 +190,10 @@ class ScannerTab:
             if self.callbacks.get('update_scan_count'):
                 self.callbacks['update_scan_count']()
             
-            # Update status with truncated data
-            from ...utils.common_utils import truncate_text
-            truncated_data = truncate_text(scan_result.data, 50)
+            # Update status with final message
             if self.callbacks.get('update_status'):
-                self.callbacks['update_status'](f"Scanned: {truncated_data}")
+                self.callbacks['update_status'](final_message)
         else:
-            # Handle scan processing error
-            error_msg = scan_result.error_message or "Unknown error"
+            # Handle scan error
             if self.callbacks.get('update_status'):
-                self.callbacks['update_status'](f"Scan error: {error_msg}")
-        
-        # Add to Google Sheets (in background)
-        self.app_manager.add_scan_data(data, barcode_type) 
+                self.callbacks['update_status'](f"❌ Scan error: {scan_result.error_message}") 

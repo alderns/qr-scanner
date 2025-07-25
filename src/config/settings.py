@@ -18,6 +18,11 @@ SCOPES = ['https://www.googleapis.com/auth/spreadsheets']
 DEFAULT_SPREADSHEET_ID = "1PjW2-qgjWs5123qkzVyOBc-OKs2Ygk1143zkl_CymwQ"
 DEFAULT_SHEET_NAME = "Scanner"
 MASTER_LIST_SHEET = "MasterList"
+
+# Master List Configuration
+DEFAULT_MASTER_LIST_SPREADSHEET_ID = "1PjW2-qgjWs5123qkzVyOBc-OKs2Ygk1143zkl_CymwQ"
+DEFAULT_MASTER_LIST_SHEET_NAME = "MasterList"
+
 CREDENTIALS_FILE = "credentials.json"
 TOKEN_FILE = "token.pickle"
 

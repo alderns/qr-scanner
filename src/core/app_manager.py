@@ -260,13 +260,18 @@ class QRScannerApp(LoggerMixin):
     def _initialize_services(self):
         """Initialize service layer components."""
         try:
-            # Initialize sheets service first
-            sheets_config = SheetConfig(
-                spreadsheet_id=self.config_manager.get_google_sheets_config().spreadsheet_id,
-                sheet_name=self.config_manager.get_google_sheets_config().sheet_name,
-                master_list_sheet=self.config_manager.get_google_sheets_config().master_list_sheet
+            # Get Google Sheets configuration
+            sheets_config = self.config_manager.get_google_sheets_config()
+            
+            # Initialize sheets service with configuration
+            service_config = SheetConfig(
+                spreadsheet_id=sheets_config.spreadsheet_id,
+                sheet_name=sheets_config.sheet_name,
+                master_list_sheet=sheets_config.master_list_sheet,
+                master_list_spreadsheet_id=sheets_config.master_list_spreadsheet_id,
+                master_list_sheet_name=sheets_config.master_list_sheet_name
             )
-            self.sheets_service = GoogleSheetsService(sheets_config)
+            self.sheets_service = GoogleSheetsService(service_config)
             
             # Initialize volunteer service with sheets manager
             self.volunteer_service = VolunteerService(self.sheets_manager)
@@ -511,6 +516,43 @@ class QRScannerApp(LoggerMixin):
         except Exception as e:
             self.log_error(f"Error loading master list: {str(e)}")
             return 0
+    
+    def update_master_list_config(self, spreadsheet_id: str, sheet_name: str) -> bool:
+        """
+        Update the Master List configuration.
+        
+        Args:
+            spreadsheet_id: Master List spreadsheet ID
+            sheet_name: Master List sheet name
+            
+        Returns:
+            True if successful, False otherwise
+        """
+        try:
+            if not self.sheets_manager:
+                self.log_error("Sheets manager not initialized")
+                return False
+            
+            # Update the sheets manager configuration
+            self.sheets_manager.update_master_list_config(spreadsheet_id, sheet_name)
+            
+            # Update the configuration manager
+            self.config_manager.update_google_sheets_config(
+                master_list_spreadsheet_id=spreadsheet_id,
+                master_list_sheet_name=sheet_name
+            )
+            
+            # Update the sheets service configuration if it exists
+            if self.sheets_service:
+                self.sheets_service.config.master_list_spreadsheet_id = spreadsheet_id
+                self.sheets_service.config.master_list_sheet_name = sheet_name
+            
+            self.log_info(f"Updated Master List config: {spreadsheet_id}/{sheet_name}")
+            return True
+            
+        except Exception as e:
+            self.log_error(f"Error updating Master List config: {str(e)}")
+            return False
     
     def add_scan_data(self, data: str, barcode_type: str) -> bool:
         """Add scan data to Google Sheets."""
