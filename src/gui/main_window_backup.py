@@ -9,6 +9,7 @@ import time
 from PIL import Image, ImageTk
 
 from .components import ModernButton, StatusIndicator
+from .tabs import LogsTab
 from ..config.theme import (
     THEME_COLORS, TITLE_FONT, HEADER_FONT, NORMAL_FONT, SMALL_FONT,
     BUTTON_PADDING, SECTION_PADDING
@@ -170,6 +171,11 @@ class MainWindow:
         history_frame = tk.Frame(self.notebook, bg=THEME_COLORS['background'])
         self.notebook.add(history_frame, text="History")
         self._create_history_tab(history_frame)
+
+        # Logs tab
+        logs_frame = tk.Frame(self.notebook, bg=THEME_COLORS['background'])
+        self.notebook.add(logs_frame, text="Logs")
+        self._create_logs_tab(logs_frame)
     
     def _create_scanner_tab(self, parent):
         """Create the scanner tab with video and controls."""
@@ -386,6 +392,13 @@ class MainWindow:
         # Bind double-click event to copy from history
         self.history_tree.bind('<Double-1>', self._copy_from_history)
     
+    def _create_logs_tab(self, parent):
+        """Create the logs tab."""
+        callbacks = {
+            'update_status': self.update_status
+        }
+        self.logs_tab = LogsTab(parent, self.app_manager, callbacks)
+    
     def _create_status_bar(self, parent):
         """Create the status bar at the bottom."""
         self.status_bar = tk.Frame(parent, bg=THEME_COLORS['surface'], 
@@ -400,8 +413,9 @@ class MainWindow:
     
     def update_status(self, message):
         """Update the status bar message."""
-        self.status_label.configure(text=message)
-        self.root.update_idletasks()
+        if hasattr(self, 'status_label'):
+            self.status_label.configure(text=message)
+            self.root.update_idletasks()
     
     def handle_app_callback(self, callback_type, data=None):
         """Handle callbacks from the application manager."""
@@ -659,9 +673,6 @@ class MainWindow:
         
         # Update status
         self.update_status(f"Scanned: {data[:50]}{'...' if len(data) > 50 else ''}")
-        
-        # Simulate QR scanner behavior immediately
-        self.app_manager.simulate_qr_scanner_behavior(data)
         
         # Add to Google Sheets (in background)
         self.app_manager.add_scan_data(data, barcode_type)

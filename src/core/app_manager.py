@@ -122,7 +122,7 @@ class QRScannerApp(LoggerMixin):
             error_msg = f"Missing required packages: {', '.join(missing_packages)}\n\n"
             error_msg += "Please install required packages:\n"
             error_msg += "pip install opencv-python pyzbar pillow google-api-python-client "
-            error_msg += "google-auth-httplib2 google-auth-oauthlib pyautogui"
+            error_msg += "google-auth-httplib2 google-auth-oauthlib"
             
             self.log_error(error_msg)
             if self.root:
@@ -197,11 +197,6 @@ class QRScannerApp(LoggerMixin):
             # Copy to clipboard
             if self.copy_to_clipboard(data):
                 self.log_info("Data copied to clipboard")
-            
-            # Simulate typing for URLs
-            if data.startswith(('http://', 'https://', 'www.')):
-                self.simulate_qr_scanner_behavior(data)
-                self.log_info("Typing simulation completed")
                 
         except Exception as e:
             self.log_error(f"Error handling scan actions: {str(e)}")
@@ -383,40 +378,25 @@ class QRScannerApp(LoggerMixin):
     def get_last_scan(self) -> Optional[str]:
         """Get the last scanned data."""
         if self.scan_processor:
-            return self.scan_processor.get_last_scan()
+            return self.scan_processor.get_last_scan_data()
         return None
     
     def setup_credentials(self, credentials_path: str) -> bool:
-        """Setup Google Sheets credentials manually."""
+        """Setup Google Sheets credentials."""
         try:
-            if self.sheets_manager.setup_credentials(credentials_path):
-                self.log_info("Manual credentials setup successful")
-                if self.status_callback:
-                    self.status_callback("Google Sheets credentials configured")
-                if self.gui_callback:
-                    self.root.after(0, self.gui_callback, 'credentials_status', 
-                                  {'status': 'success', 'message': 'Credentials configured'})
-                return True
-            else:
-                self.log_error("Manual credentials setup failed")
-                if self.status_callback:
-                    self.status_callback("Failed to setup Google Sheets credentials")
-                if self.gui_callback:
-                    self.root.after(0, self.gui_callback, 'credentials_status', 
-                                  {'status': 'error', 'message': 'Failed to setup credentials'})
-                return False
+            if self.sheets_manager:
+                return self.sheets_manager.setup_credentials(credentials_path)
+            return False
         except Exception as e:
-            self.log_error(f"Error in manual credentials setup: {str(e)}")
-            if self.status_callback:
-                self.status_callback("Error setting up credentials")
-            if self.gui_callback:
-                self.root.after(0, self.gui_callback, 'credentials_status', 
-                              {'status': 'error', 'message': f'Error: {str(e)}'})
+            self.log_error(f"Error setting up credentials: {str(e)}")
             return False
     
     def connect_to_sheets(self, spreadsheet_id: str, sheet_name: str) -> str:
-        """Connect to a specific Google Spreadsheet."""
+        """Connect to Google Sheets."""
         try:
+            if not self.sheets_manager:
+                raise Exception("Sheets manager not initialized")
+            
             spreadsheet_title = self.sheets_manager.connect_to_spreadsheet(spreadsheet_id, sheet_name)
             self.log_info(f"Connected to spreadsheet: {spreadsheet_title}")
             if self.status_callback:
@@ -508,13 +488,4 @@ class QRScannerApp(LoggerMixin):
             return False
         except Exception as e:
             self.log_error(f"Error copying to clipboard: {str(e)}")
-            return False
-    
-    def simulate_qr_scanner_behavior(self, data: str):
-        """Simulate QR scanner behavior."""
-        try:
-            from ..utils.scanner_utils import simulate_qr_scanner_behavior
-            if self.root:
-                simulate_qr_scanner_behavior(data, self.root)
-        except Exception as e:
-            self.log_error(f"Error simulating QR scanner behavior: {str(e)}") 
+            return False 

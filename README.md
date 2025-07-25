@@ -57,7 +57,19 @@ qr/
    pip install -r requirements.txt
    ```
 
-3. **Setup Google Sheets API**:
+3. **Install optional dependencies** (for enhanced features):
+
+   ```bash
+   python install_optional_deps.py
+   ```
+
+   Or install manually:
+
+   ```bash
+   pip install psutil  # For enhanced performance monitoring
+   ```
+
+4. **Setup Google Sheets API**:
    - Go to [Google Cloud Console](https://console.cloud.google.com/)
    - Create a new project or select existing one
    - Enable Google Sheets API
@@ -205,4 +217,5 @@ For support and questions:
 - Create an issue on GitHub
 - Check the documentation in the `docs/` folder
 - Review the troubleshooting section above
+
 # qr-scanner

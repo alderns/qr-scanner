@@ -179,8 +179,5 @@ class ScannerTab:
         if self.callbacks.get('update_status'):
             self.callbacks['update_status'](f"Scanned: {data[:50]}{'...' if len(data) > 50 else ''}")
         
-        # Simulate QR scanner behavior immediately
-        self.app_manager.simulate_qr_scanner_behavior(data)
-        
         # Add to Google Sheets (in background)
         self.app_manager.add_scan_data(data, barcode_type) 

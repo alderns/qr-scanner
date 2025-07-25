@@ -1,7 +1,3 @@
-"""
-Service layer for the QR Scanner application.
-"""
-
 from .scan_service import ScanService
 from .sheets_service import SheetsService
 from .volunteer_service import VolunteerService

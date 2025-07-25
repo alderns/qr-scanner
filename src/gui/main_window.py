@@ -1,14 +1,19 @@
 """
 Main window for the QR Scanner application.
-Refactored and cleaned up - v3.
+Enhanced with responsive design, accessibility, and performance optimizations.
 """
 
 import tkinter as tk
 from tkinter import ttk, messagebox, filedialog
 import time
+import threading
 from PIL import Image, ImageTk
 
-from .components import ModernButton, StatusIndicator
+from .components import (
+    ModernButton, StatusIndicator, Tooltip, ResponsiveFrame, 
+    LoadingIndicator, VirtualizedTreeview, AsyncTaskManager
+)
+from .tabs import LogsTab
 from ..config.theme import (
     THEME_COLORS, TITLE_FONT, HEADER_FONT, NORMAL_FONT, SMALL_FONT,
     BUTTON_PADDING, SECTION_PADDING
@@ -21,7 +26,7 @@ from ..config.settings import (
 
 
 class MainWindow:
-    """Main window class for the QR Scanner application."""
+    """Enhanced main window class with responsive design and accessibility."""
     
     def __init__(self, root, app_manager):
         self.root = root
@@ -31,6 +36,10 @@ class MainWindow:
         self.scan_history = []
         self.auto_load_master_list = True
         self.is_scanning = False
+        
+        # Performance and threading
+        self.async_manager = AsyncTaskManager(self._gui_update_callback)
+        self.loading_indicators = {}
         
         # GUI components
         self.video_frame = None
@@ -47,9 +56,15 @@ class MainWindow:
         self.scan_count_label = None
         self.status_bar = None
         
+        # Responsive design
+        self.current_layout = 'large'
+        self.min_window_size = (800, 600)
+        
         # Setup GUI
         self.setup_gui()
         self.setup_styles()
+        self.setup_accessibility()
+        self.setup_responsive_behavior()
         
     def setup_styles(self):
         """Setup custom ttk styles."""
@@ -102,28 +117,134 @@ class MainWindow:
                        font=HEADER_FONT)
         
     def setup_gui(self):
-        """Setup the main GUI layout."""
+        """Setup the main GUI layout with responsive design."""
         self.root.title(WINDOW_TITLE)
         self.root.geometry(WINDOW_SIZE)
         self.root.configure(bg=THEME_COLORS['background'])
         
-        # Configure grid weights
+        # Set minimum window size
+        self.root.minsize(*self.min_window_size)
+        
+        # Configure grid weights for responsive layout
         self.root.grid_rowconfigure(0, weight=1)
         self.root.grid_columnconfigure(0, weight=1)
         
-        # Main container
-        main_container = tk.Frame(self.root, bg=THEME_COLORS['background'])
-        main_container.grid(row=0, column=0, sticky='nsew', padx=20, pady=20)
-        main_container.grid_rowconfigure(1, weight=1)
-        main_container.grid_columnconfigure(0, weight=1)
+        # Main container with responsive behavior
+        self.main_container = ResponsiveFrame(self.root, bg=THEME_COLORS['background'])
+        self.main_container.grid(row=0, column=0, sticky='nsew', padx=20, pady=20)
+        self.main_container.grid_rowconfigure(1, weight=1)
+        self.main_container.grid_columnconfigure(0, weight=1)
         
         # Create all sections
-        self._create_header_section(main_container)
-        self._create_main_content(main_container)
-        self._create_status_bar(main_container)
+        self._create_header_section(self.main_container)
+        self._create_main_content(self.main_container)
+        self._create_status_bar(self.main_container)
         
         # Set initial status
         self._set_initial_status()
+        
+        # Bind window resize events
+        self.root.bind('<Configure>', self._on_window_resize)
+    
+    def setup_accessibility(self):
+        """Setup accessibility features."""
+        # Enable keyboard navigation
+        self.root.bind('<Tab>', self._handle_tab_navigation)
+        self.root.bind('<Shift-Tab>', self._handle_tab_navigation)
+        
+        # Add keyboard shortcuts
+        self.root.bind('<Control-s>', lambda e: self._toggle_camera())
+        self.root.bind('<Control-c>', lambda e: self._copy_last_scan())
+        self.root.bind('<Control-h>', lambda e: self._clear_history())
+        self.root.bind('<F1>', lambda e: self._show_help())
+        
+        # Set focus order for screen readers
+        self.focus_order = []
+    
+    def setup_responsive_behavior(self):
+        """Setup responsive behavior for different screen sizes."""
+        # Override ResponsiveFrame methods for this window
+        self.main_container._apply_small_layout = self._apply_small_layout
+        self.main_container._apply_medium_layout = self._apply_medium_layout
+        self.main_container._apply_large_layout = self._apply_large_layout
+    
+    def _gui_update_callback(self, update_func):
+        """Callback for GUI updates from async tasks."""
+        if self.root:
+            self.root.after(0, update_func)
+    
+    def _on_window_resize(self, event):
+        """Handle window resize events."""
+        if event.widget == self.root:
+            width = event.width
+            height = event.height
+            
+            # Determine layout based on window size
+            if width < 800:
+                new_layout = 'small'
+            elif width < 1200:
+                new_layout = 'medium'
+            else:
+                new_layout = 'large'
+            
+            if new_layout != self.current_layout:
+                self.current_layout = new_layout
+                self._apply_layout(new_layout)
+    
+    def _apply_layout(self, layout):
+        """Apply specific layout based on screen size."""
+        if layout == 'small':
+            self._apply_small_layout()
+        elif layout == 'medium':
+            self._apply_medium_layout()
+        else:
+            self._apply_large_layout()
+    
+    def _apply_small_layout(self):
+        """Apply small screen layout (mobile-like)."""
+        # Stack elements vertically
+        if hasattr(self, 'notebook'):
+            self.notebook.grid_configure(padx=5, pady=5)
+        
+        # Reduce padding and margins
+        if hasattr(self, 'main_container'):
+            self.main_container.grid_configure(padx=10, pady=10)
+    
+    def _apply_medium_layout(self):
+        """Apply medium screen layout (tablet-like)."""
+        # Balanced layout
+        if hasattr(self, 'notebook'):
+            self.notebook.grid_configure(padx=15, pady=10)
+        
+        if hasattr(self, 'main_container'):
+            self.main_container.grid_configure(padx=15, pady=15)
+    
+    def _apply_large_layout(self):
+        """Apply large screen layout (desktop)."""
+        # Full layout with generous spacing
+        if hasattr(self, 'notebook'):
+            self.notebook.grid_configure(padx=20, pady=15)
+        
+        if hasattr(self, 'main_container'):
+            self.main_container.grid_configure(padx=20, pady=20)
+    
+    def _handle_tab_navigation(self, event):
+        """Handle tab navigation for accessibility."""
+        # Let tkinter handle default tab behavior
+        return None
+    
+    def _show_help(self):
+        """Show help dialog with keyboard shortcuts."""
+        help_text = """
+Keyboard Shortcuts:
+• Ctrl+S: Start/Stop Camera
+• Ctrl+C: Copy Last Scan
+• Ctrl+H: Clear History
+• F1: Show this help
+• Tab: Navigate between elements
+• Enter/Space: Activate buttons
+        """
+        messagebox.showinfo("Keyboard Shortcuts", help_text.strip())
         
     def _create_header_section(self, parent):
         """Create the header section with title and stats."""
@@ -173,6 +294,11 @@ class MainWindow:
         history_frame = tk.Frame(self.notebook, bg=THEME_COLORS['background'])
         self.notebook.add(history_frame, text="History")
         self._create_history_tab(history_frame)
+
+        # Logs tab
+        logs_frame = tk.Frame(self.notebook, bg=THEME_COLORS['background'])
+        self.notebook.add(logs_frame, text="Logs")
+        self._create_logs_tab(logs_frame)
     
     def _create_scanner_tab(self, parent):
         """Create the scanner tab with video and controls."""
@@ -202,17 +328,20 @@ class MainWindow:
         
         self.start_button = ModernButton(control_frame, text="Start Camera", 
                                         bg=THEME_COLORS['primary'], fg='white',
-                                        command=self._toggle_camera)
+                                        command=self._toggle_camera,
+                                        tooltip="Start or stop the camera for QR code scanning (Ctrl+S)")
         self.start_button.pack(side=tk.LEFT, padx=(0, 10))
         
         clear_button = ModernButton(control_frame, text="Clear History", 
                                    bg=THEME_COLORS['warning'], fg='white',
-                                   command=self._clear_history)
+                                   command=self._clear_history,
+                                   tooltip="Clear all scan history (Ctrl+H)")
         clear_button.pack(side=tk.LEFT, padx=(0, 10))
         
         copy_button = ModernButton(control_frame, text="Copy Last Scan", 
                                   bg=THEME_COLORS['secondary'], fg='white',
-                                  command=self._copy_last_scan)
+                                  command=self._copy_last_scan,
+                                  tooltip="Copy the last scanned QR code to clipboard (Ctrl+C)")
         copy_button.pack(side=tk.LEFT)
         
         # Right panel - Results
@@ -259,7 +388,8 @@ class MainWindow:
         # Manual setup button (only shown if auto-setup fails)
         self.credentials_button = ModernButton(cred_frame, text="Setup Credentials Manually", 
                                               bg=THEME_COLORS['warning'], fg='white',
-                                              command=self._setup_credentials)
+                                              command=self._setup_credentials,
+                                              tooltip="Manually configure Google Sheets API credentials")
         self.credentials_button.pack(anchor=tk.W, pady=(5, 0))
         self.credentials_button.pack_forget()  # Hide by default
         
@@ -298,7 +428,8 @@ class MainWindow:
         # Connect button
         self.connect_button = ModernButton(conn_frame, text="Connect to Sheets", 
                                           bg=THEME_COLORS['success'], fg='white',
-                                          command=self._connect_to_sheets)
+                                          command=self._connect_to_sheets,
+                                          tooltip="Connect to the specified Google Spreadsheet")
         self.connect_button.pack(anchor=tk.W, pady=(10, 0))
         
         # Connection status
@@ -371,9 +502,9 @@ class MainWindow:
         tree_frame = tk.Frame(history_card, bg=THEME_COLORS['surface'])
         tree_frame.pack(fill=tk.BOTH, expand=True, padx=20, pady=(0, 20))
         
-        # Create treeview for history
+        # Create virtualized treeview for history (better performance for large datasets)
         columns = ('Time', 'ID Number', 'Name', 'Status', 'Type')
-        self.history_tree = ttk.Treeview(tree_frame, columns=columns, show='headings', height=15)
+        self.history_tree = VirtualizedTreeview(tree_frame, columns=columns, show='headings', height=15)
         
         # Define headings
         self.history_tree.heading('Time', text='Time')
@@ -382,12 +513,12 @@ class MainWindow:
         self.history_tree.heading('Status', text='Status')
         self.history_tree.heading('Type', text='Type')
         
-        # Define columns
-        self.history_tree.column('Time', width=120)
-        self.history_tree.column('ID Number', width=150)
-        self.history_tree.column('Name', width=200)
-        self.history_tree.column('Status', width=100)
-        self.history_tree.column('Type', width=80)
+        # Define columns with responsive widths
+        self.history_tree.column('Time', width=120, minwidth=80)
+        self.history_tree.column('ID Number', width=150, minwidth=100)
+        self.history_tree.column('Name', width=200, minwidth=120)
+        self.history_tree.column('Status', width=100, minwidth=60)
+        self.history_tree.column('Type', width=80, minwidth=50)
         
         # Add scrollbar
         scrollbar = ttk.Scrollbar(tree_frame, orient=tk.VERTICAL, command=self.history_tree.yview)
@@ -396,8 +527,22 @@ class MainWindow:
         self.history_tree.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
         scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
         
-        # Bind double-click event to copy from history
+        # Bind events for accessibility and functionality
         self.history_tree.bind('<Double-1>', self._copy_from_history)
+        self.history_tree.bind('<Return>', self._copy_from_history)
+        self.history_tree.bind('<Key-c>', self._copy_from_history)
+        
+        # Add tooltip for the treeview
+        Tooltip(self.history_tree, "Double-click or press Enter to copy selected item to clipboard")
+    
+    def _create_logs_tab(self, parent):
+        """Create the logs tab."""
+        callbacks = {
+            'update_status': self.update_status,
+            'add_to_history': self._add_to_history,
+            'update_scan_count': self._update_scan_count
+        }
+        self.logs_tab = LogsTab(parent, self.app_manager, callbacks)
     
     def _create_status_bar(self, parent):
         """Create the status bar at the bottom."""
@@ -413,8 +558,9 @@ class MainWindow:
     
     def update_status(self, message):
         """Update the status bar message."""
-        self.status_label.configure(text=message)
-        self.root.update_idletasks()
+        if hasattr(self, 'status_label'):
+            self.status_label.configure(text=message)
+            self.root.update_idletasks()
     
     def _set_initial_status(self):
         """Set initial status for all indicators."""
@@ -546,20 +692,32 @@ class MainWindow:
         self.update_status(f"Auto-load master list {status}")
     
     def _load_master_list(self):
-        """Load master list data from Google Sheets."""
+        """Load master list data from Google Sheets with async processing."""
         if not self.app_manager.is_sheets_connected():
             messagebox.showwarning("Not Connected", "Please connect to Google Sheets first!")
             return
         
-        try:
-            # Update status
-            self.master_list_status.set_status('warning')
-            self.master_list_status.set_text("Loading...")
-            self.update_status("Loading master list...")
-            self.root.update()
-            
-            # Get master list data
-            count = self.app_manager.load_master_list()
+        # Show loading indicator
+        loading_frame = tk.Frame(self.root, bg=THEME_COLORS['background'])
+        loading_frame.place(relx=0.5, rely=0.5, anchor='center')
+        
+        loading_indicator = LoadingIndicator(loading_frame, text="Loading Master List...")
+        loading_indicator.pack()
+        loading_indicator.start()
+        
+        # Update status
+        self.master_list_status.set_status('warning')
+        self.master_list_status.set_text("Loading...")
+        self.update_status("Loading master list...")
+        
+        def load_task():
+            """Async task to load master list."""
+            return self.app_manager.load_master_list()
+        
+        def on_complete(count):
+            """Handle successful completion."""
+            loading_indicator.stop()
+            loading_frame.destroy()
             
             if count > 0:
                 self.master_list_status.set_status('success')
@@ -571,12 +729,19 @@ class MainWindow:
                 self.master_list_status.set_text("No data found")
                 self.update_status("No data found in master list")
                 messagebox.showwarning("No Data", "No data found in master list sheet")
-                
-        except Exception as e:
+        
+        def on_error(error):
+            """Handle error."""
+            loading_indicator.stop()
+            loading_frame.destroy()
+            
             self.master_list_status.set_status('error')
             self.master_list_status.set_text("Error loading")
-            self.update_status(f"Error loading master list: {str(e)}")
-            messagebox.showerror("Error", f"Failed to load master list: {str(e)}")
+            self.update_status(f"Error loading master list: {str(error)}")
+            messagebox.showerror("Error", f"Failed to load master list: {str(error)}")
+        
+        # Run async task
+        self.async_manager.run_task(load_task, "load_master_list", on_complete, on_error)
     
     def _debug_master_list(self):
         """Debug the master list structure."""
@@ -628,13 +793,34 @@ class MainWindow:
                 messagebox.showerror("Error", f"Failed to setup credentials: {error_msg}")
     
     def _connect_to_sheets(self):
-        """Connect to a specific Google Spreadsheet."""
+        """Connect to a specific Google Spreadsheet with async processing."""
         spreadsheet_id = self.spreadsheet_entry.get().strip()
         sheet_name = self.sheet_name_entry.get().strip()
         
-        try:
-            self.update_status("Connecting to Google Sheets...")
-            spreadsheet_title = self.app_manager.connect_to_sheets(spreadsheet_id, sheet_name)
+        # Validate input
+        if not spreadsheet_id or not sheet_name:
+            messagebox.showwarning("Invalid Input", "Please enter both Spreadsheet ID and Sheet Name")
+            return
+        
+        # Show loading indicator
+        loading_frame = tk.Frame(self.root, bg=THEME_COLORS['background'])
+        loading_frame.place(relx=0.5, rely=0.5, anchor='center')
+        
+        loading_indicator = LoadingIndicator(loading_frame, text="Connecting to Google Sheets...")
+        loading_indicator.pack()
+        loading_indicator.start()
+        
+        # Update status
+        self.update_status("Connecting to Google Sheets...")
+        
+        def connect_task():
+            """Async task to connect to sheets."""
+            return self.app_manager.connect_to_sheets(spreadsheet_id, sheet_name)
+        
+        def on_complete(spreadsheet_title):
+            """Handle successful connection."""
+            loading_indicator.stop()
+            loading_frame.destroy()
             
             self.sheets_status_indicator.set_status('success')
             self.sheets_status_indicator.set_text(f"Sheets: {spreadsheet_title}")
@@ -647,14 +833,21 @@ class MainWindow:
                 self.root.after(1000, self._auto_load_master_list_data)
             
             messagebox.showinfo("Success", f"Connected to spreadsheet: {spreadsheet_title}")
+        
+        def on_error(error):
+            """Handle connection error."""
+            loading_indicator.stop()
+            loading_frame.destroy()
             
-        except Exception as e:
             self.sheets_status_indicator.set_status('error')
             self.sheets_status_indicator.set_text("Sheets: Error")
             self.sheets_status.set_status('error')
-            self.sheets_status.set_text(f"Connection error: {str(e)}")
-            self.update_status(f"Connection error: {str(e)}")
-            messagebox.showerror("Error", str(e))
+            self.sheets_status.set_text(f"Connection error: {str(error)}")
+            self.update_status(f"Connection error: {str(error)}")
+            messagebox.showerror("Error", str(error))
+        
+        # Run async task
+        self.async_manager.run_task(connect_task, "connect_sheets", on_complete, on_error)
     
     def _auto_load_master_list_data(self):
         """Automatically load master list data without showing dialogs."""
@@ -692,7 +885,7 @@ class MainWindow:
             self.video_frame.image = photo  # Keep a reference
     
     def process_scan(self, data, barcode_type):
-        """Process a new scan."""
+        """Process a new scan with efficient rendering."""
         # Update last scan text
         self.last_scan_text.delete(1.0, tk.END)
         self.last_scan_text.insert(1.0, data)
@@ -719,23 +912,65 @@ class MainWindow:
         
         # Add to history
         timestamp = time.strftime("%I:%M:%S %p")  # 12-hour format with AM/PM
-        self.scan_history.append((timestamp, data, formatted_name, status, barcode_type))
-        self.history_tree.insert('', 0, values=(timestamp, data, formatted_name, status, barcode_type))
+        new_scan = (timestamp, data, formatted_name, status, barcode_type)
+        self.scan_history.insert(0, new_scan)  # Insert at beginning for newest first
+        
+        # Efficiently update virtualized treeview
+        if hasattr(self.history_tree, 'set_data'):
+            # Use virtualized treeview for large datasets
+            self.history_tree.set_data(self.scan_history)
+        else:
+            # Fallback to regular treeview for small datasets
+            self.history_tree.insert('', 0, values=new_scan)
         
         # Update scan count
         scan_count = len(self.scan_history)
         self.scan_count_label.configure(text=f"Scans: {scan_count}")
         
-        # Update status
+        # Update status with visual feedback
         self.update_status(f"Scanned: {data[:50]}{'...' if len(data) > 50 else ''}")
         
-        # Simulate QR scanner behavior immediately
-        self.app_manager.simulate_qr_scanner_behavior(data)
+        # Add to Google Sheets (in background) with async processing
+        def add_scan_task():
+            return self.app_manager.add_scan_data(data, barcode_type)
         
-        # Add to Google Sheets (in background)
-        self.app_manager.add_scan_data(data, barcode_type)
+        self.async_manager.run_task(add_scan_task, "add_scan_data")
+    
+    def _add_to_history(self, timestamp, data, formatted_name, status, barcode_type):
+        """Add a scan entry to the history."""
+        new_scan = (timestamp, data, formatted_name, status, barcode_type)
+        self.scan_history.insert(0, new_scan)
+        
+        # Update treeview
+        if hasattr(self.history_tree, 'set_data'):
+            self.history_tree.set_data(self.scan_history)
+        else:
+            self.history_tree.insert('', 0, values=new_scan)
+    
+    def _update_scan_count(self):
+        """Update the scan count display."""
+        scan_count = len(self.scan_history)
+        if self.scan_count_label:
+            self.scan_count_label.configure(text=f"Scans: {scan_count}")
     
     def on_closing(self):
-        """Handle application closing."""
+        """Handle application closing with proper resource cleanup."""
+        # Stop all async tasks
+        active_tasks = self.async_manager.get_active_tasks()
+        for task_id in active_tasks:
+            self.async_manager.cancel_task(task_id)
+        
+        # Stop camera
         self.app_manager.stop_camera()
+        
+        # Clear any loading indicators
+        for indicator in self.loading_indicators.values():
+            if hasattr(indicator, 'stop'):
+                indicator.stop()
+        
+        # Clear references to prevent memory leaks
+        self.loading_indicators.clear()
+        self.scan_history.clear()
+        
+        # Destroy the window
         self.root.destroy() 

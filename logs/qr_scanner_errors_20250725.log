@@ -1,0 +1,53 @@
+2025-07-25 10:57:05,572 - src.utils.file_utils - ERROR - main:61 - Unexpected error: 'MainWindow' object has no attribute 'status_label'
+Traceback (most recent call last):
+  File "C:\Users\aldri\Downloads\qr\src\gui\tabs\logs_tab.py", line 202, in _load_log_content
+    self._apply_filter()
+  File "C:\Users\aldri\Downloads\qr\src\gui\tabs\logs_tab.py", line 263, in _apply_filter
+    self._update_status(f"Showing {len(self.filtered_entries)} of {len(self.log_entries)} entries")
+  File "C:\Users\aldri\Downloads\qr\src\gui\tabs\logs_tab.py", line 406, in _update_status
+    self.callbacks['update_status'](message)
+  File "C:\Users\aldri\Downloads\qr\src\gui\main_window.py", line 561, in update_status
+    self.status_label.configure(text=message)
+    ^^^^^^^^^^^^^^^^^
+AttributeError: 'MainWindow' object has no attribute 'status_label'. Did you mean: 'status_bar'?
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\aldri\Downloads\qr\src\gui\tabs\logs_tab.py", line 180, in _load_log_files
+    self._load_log_content(self.log_files[0])
+  File "C:\Users\aldri\Downloads\qr\src\gui\tabs\logs_tab.py", line 206, in _load_log_content
+    self._update_status(f"Error loading log content: {str(e)}")
+  File "C:\Users\aldri\Downloads\qr\src\gui\tabs\logs_tab.py", line 406, in _update_status
+    self.callbacks['update_status'](message)
+  File "C:\Users\aldri\Downloads\qr\src\gui\main_window.py", line 561, in update_status
+    self.status_label.configure(text=message)
+    ^^^^^^^^^^^^^^^^^
+AttributeError: 'MainWindow' object has no attribute 'status_label'. Did you mean: 'status_bar'?
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\aldri\Downloads\qr\main.py", line 32, in main
+    main_window = MainWindow(root, app_manager)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\aldri\Downloads\qr\src\gui\main_window.py", line 64, in __init__
+    self.setup_gui()
+  File "C:\Users\aldri\Downloads\qr\src\gui\main_window.py", line 140, in setup_gui
+    self._create_main_content(self.main_container)
+  File "C:\Users\aldri\Downloads\qr\src\gui\main_window.py", line 301, in _create_main_content
+    self._create_logs_tab(logs_frame)
+  File "C:\Users\aldri\Downloads\qr\src\gui\main_window.py", line 545, in _create_logs_tab
+    self.logs_tab = LogsTab(parent, self.app_manager, callbacks)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\aldri\Downloads\qr\src\gui\tabs\logs_tab.py", line 23, in __init__
+    self._load_log_files()
+  File "C:\Users\aldri\Downloads\qr\src\gui\tabs\logs_tab.py", line 183, in _load_log_files
+    self._update_status(f"Error loading log files: {str(e)}")
+  File "C:\Users\aldri\Downloads\qr\src\gui\tabs\logs_tab.py", line 406, in _update_status
+    self.callbacks['update_status'](message)
+  File "C:\Users\aldri\Downloads\qr\src\gui\main_window.py", line 561, in update_status
+    self.status_label.configure(text=message)
+    ^^^^^^^^^^^^^^^^^
+AttributeError: 'MainWindow' object has no attribute 'status_label'. Did you mean: 'status_bar'?
+2025-07-25 11:02:00,253 - src.utils.file_utils - ERROR - log_error:105 - Error connecting to spreadsheet: 'GoogleSheetsManager' object has no attribute 'connect_to_sheets'

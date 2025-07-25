@@ -9,11 +9,11 @@ google-api-python-client>=2.0.0
 google-auth-httplib2>=0.1.0
 google-auth-oauthlib>=0.4.0
 
-# GUI and automation
-pyautogui>=0.9.50
-
 # Data validation
 email-validator>=1.1.0
+
+# Performance monitoring (optional - for enhanced monitoring)
+psutil>=5.8.0  # Optional dependency
 
 # Development and testing (optional)
 pytest>=6.0.0
