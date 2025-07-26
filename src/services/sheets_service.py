@@ -142,7 +142,9 @@ class GoogleSheetsService(LoggerMixin):
     
     def add_scan_data(self, scan_data: ScanData) -> bool:
         """
-        Add scan data to Google Sheets.
+        Add or update scan data in Google Sheets.
+        If a row with the same ID exists, it will be updated.
+        If no matching row exists, a new row will be appended.
         
         Args:
             scan_data: ScanData object containing the scan information
@@ -173,22 +175,30 @@ class GoogleSheetsService(LoggerMixin):
                 scan_data.status
             ]]
             
-            # Append to the sheet
-            body = {'values': values}
+            # First, try to find an existing row with the same ID
+            existing_row = self._find_row_by_id(scan_data.data)
             
-            result = self.sheets_service.spreadsheets().values().append(
-                spreadsheetId=self.config.spreadsheet_id,
-                range=f"{self.config.sheet_name}!A:E",
-                valueInputOption='RAW',
-                insertDataOption='INSERT_ROWS',
-                body=body
-            ).execute()
+            if existing_row is not None:
+                # TEMPORARILY DISABLED: Skip updating existing rows to test
+                self.log_info(f"Found existing row for ID: {scan_data.data} - skipping update to preserve formulas")
+                return True
+            else:
+                # Append new row if no existing row found
+                body = {'values': values}
+                
+                result = self.sheets_service.spreadsheets().values().append(
+                    spreadsheetId=self.config.spreadsheet_id,
+                    range=f"{self.config.sheet_name}!A:E",
+                    valueInputOption='USER_ENTERED',
+                    body=body
+                ).execute()
+                
+                self.log_info(f"Added new row for ID: {scan_data.data} -> {scan_data.formatted_name}")
             
-            self.log_info(f"Added scan data: {scan_data.data} -> {scan_data.formatted_name}")
             return True
             
         except Exception as e:
-            self.log_error(f"Error adding scan data: {str(e)}")
+            self.log_error(f"Error adding/updating scan data: {str(e)}")
             return False
     
     def load_master_list(self) -> int:
@@ -468,6 +478,42 @@ class GoogleSheetsService(LoggerMixin):
                     name_column_index = i
         
         return first_name_column_index, last_name_column_index, name_column_index
+    
+    def _find_row_by_id(self, volunteer_id: str) -> Optional[int]:
+        """
+        Find the row number (0-based index) of an existing record with the given ID.
+        
+        Args:
+            volunteer_id: The volunteer ID to search for
+            
+        Returns:
+            Row number (0-based) if found, None if not found
+        """
+        try:
+            if not self.sheets_service:
+                return None
+            
+            # Get all data from the scan sheet
+            result = self.sheets_service.spreadsheets().values().get(
+                spreadsheetId=self.config.spreadsheet_id,
+                range=f"{self.config.sheet_name}!A:E"
+            ).execute()
+            
+            values = result.get('values', [])
+            
+            if not values:
+                return None
+            
+            # Skip header row, search in data rows
+            for i, row in enumerate(values[1:], start=1):  # start=1 to skip header
+                if len(row) > 0 and str(row[0]).strip() == str(volunteer_id).strip():
+                    return i  # Return 0-based row index
+            
+            return None
+            
+        except Exception as e:
+            self.log_error(f"Error finding row by ID: {str(e)}")
+            return None
     
     def _update_status(self, status: str, message: str):
         """Update status via callback."""

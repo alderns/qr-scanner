@@ -254,7 +254,7 @@ class GoogleSheetsManager:
         return self.sheets_service is not None and self.spreadsheet_id is not None
     
     def add_scan_data(self, data, barcode_type):
-        """Add scan data to the Google Sheet."""
+        """Add or update scan data in the Google Sheet."""
         if not self.is_connected():
             logger.warning("Not connected to Google Sheets")
             return False
@@ -282,20 +282,26 @@ class GoogleSheetsManager:
                 # Prepare the data: [ID Number, Date, Time In, Name, Status]
                 values = [[data, date_str, time_str, formatted_name, status]]
                 
-                # Append to the sheet
-                body = {
-                    'values': values
-                }
+                # First, try to find an existing row with the same ID
+                existing_row = self._find_row_by_id(data)
                 
-                result = self.sheets_service.spreadsheets().values().append(
-                    spreadsheetId=self.spreadsheet_id,
-                    range=f"{self.sheet_name}!A:E",
-                    valueInputOption='RAW',
-                    insertDataOption='INSERT_ROWS',
-                    body=body
-                ).execute()
+                if existing_row is not None:
+                    # TEMPORARILY DISABLED: Skip updating existing rows to test
+                    logger.info(f"Found existing row for ID: {data} - skipping update to preserve formulas")
+                    return True
+                else:
+                    # Append new row if no existing row found
+                    body = {'values': values}
+                    
+                    result = self.sheets_service.spreadsheets().values().append(
+                        spreadsheetId=self.spreadsheet_id,
+                        range=f"{self.sheet_name}!A:E",
+                        valueInputOption='USER_ENTERED',
+                        body=body
+                    ).execute()
+                    
+                    logger.info(f"Added new row for ID: {data} (Name: {first_name} {last_name})")
                 
-                logger.info(f"Added scan data to sheets: {data} (Name: {first_name} {last_name})")
                 return True
             else:
                 # User not found in master list - do not add to sheets
@@ -303,7 +309,7 @@ class GoogleSheetsManager:
                 return False
             
         except Exception as e:
-            logger.error(f"Error adding scan data: {str(e)}")
+            logger.error(f"Error adding/updating scan data: {str(e)}")
             return False
     
     def load_master_list(self):
@@ -505,6 +511,42 @@ class GoogleSheetsManager:
         
         logger.warning(f"Volunteer ID '{volunteer_id}' not found in master list")
         return None
+    
+    def _find_row_by_id(self, volunteer_id: str):
+        """
+        Find the row number (0-based index) of an existing record with the given ID in the scan sheet.
+        
+        Args:
+            volunteer_id: The volunteer ID to search for
+            
+        Returns:
+            Row number (0-based) if found, None if not found
+        """
+        try:
+            if not self.is_connected():
+                return None
+            
+            # Get all data from the scan sheet
+            result = self.sheets_service.spreadsheets().values().get(
+                spreadsheetId=self.spreadsheet_id,
+                range=f"{self.sheet_name}!A:E"
+            ).execute()
+            
+            values = result.get('values', [])
+            
+            if not values:
+                return None
+            
+            # Skip header row, search in data rows
+            for i, row in enumerate(values[1:], start=1):  # start=1 to skip header
+                if len(row) > 0 and str(row[0]).strip() == str(volunteer_id).strip():
+                    return i  # Return 0-based row index
+            
+            return None
+            
+        except Exception as e:
+            logger.error(f"Error finding row by ID: {str(e)}")
+            return None
     
     def get_master_list_data(self):
         """Get the loaded master list data."""
