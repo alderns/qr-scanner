@@ -101,6 +101,9 @@ class SettingsTab:
         # Master List section
         self._create_master_list_section(main_frame)
         
+        # Application Preferences section
+        self._create_application_preferences_section(main_frame)
+        
         # Bind mouse wheel to all widgets in the main frame
         self._bind_mousewheel_to_widget(main_frame)
     
@@ -311,6 +314,93 @@ class SettingsTab:
         # Bind mouse wheel to all widgets in this field group
         self._bind_mousewheel_to_widget(field_frame)
     
+    def _create_application_preferences_section(self, parent):
+        """Create the Application Preferences section."""
+        # Section container
+        section_frame = tk.Frame(parent, bg=THEME_COLORS['surface'], 
+                                relief='solid', borderwidth=1,
+                                highlightbackground=THEME_COLORS['border'],
+                                highlightcolor=THEME_COLORS['border'])
+        section_frame.pack(fill=tk.X, pady=(0, COMPONENT_SPACING['card_margin']))
+        
+        # Bind mouse wheel to this section
+        self._bind_mousewheel_to_widget(section_frame)
+        
+        # Section header
+        header_frame = tk.Frame(section_frame, bg=THEME_COLORS['surface'])
+        header_frame.pack(fill=tk.X, padx=COMPONENT_SPACING['card_padding'], 
+                         pady=COMPONENT_SPACING['header_padding'])
+        
+        title_label = tk.Label(header_frame, text="Application Preferences", 
+                              font=HEADER_FONT, fg=THEME_COLORS['text'], 
+                              bg=THEME_COLORS['surface'])
+        title_label.pack(anchor=tk.W)
+        
+        desc_label = tk.Label(header_frame, text="Configure application behavior and automation", 
+                             font=NORMAL_FONT, fg=THEME_COLORS['text_secondary'], 
+                             bg=THEME_COLORS['surface'])
+        desc_label.pack(anchor=tk.W, pady=(4, 0))
+        
+        # Preferences frame
+        prefs_frame = tk.Frame(section_frame, bg=THEME_COLORS['surface'])
+        prefs_frame.pack(fill=tk.X, padx=COMPONENT_SPACING['card_padding'], 
+                        pady=(0, COMPONENT_SPACING['card_padding']))
+        
+        # Get current preferences
+        current_prefs = self.app_manager.config_manager.get_user_preferences()
+        
+        # Auto-connect to Google Sheets checkbox
+        auto_connect_frame = tk.Frame(prefs_frame, bg=THEME_COLORS['surface'])
+        auto_connect_frame.pack(fill=tk.X, pady=(0, 12))
+        
+        self.auto_connect_var = tk.BooleanVar(value=current_prefs.get('auto_connect_to_sheets', True))
+        auto_connect_check = tk.Checkbutton(auto_connect_frame, 
+                                           text="Auto-connect to Google Sheets on startup", 
+                                           variable=self.auto_connect_var, 
+                                           command=self._update_auto_connect_setting,
+                                           font=NORMAL_FONT, bg=THEME_COLORS['surface'],
+                                           fg=THEME_COLORS['text'])
+        auto_connect_check.pack(side=tk.LEFT)
+        
+        # Auto-load master list checkbox
+        auto_load_frame = tk.Frame(prefs_frame, bg=THEME_COLORS['surface'])
+        auto_load_frame.pack(fill=tk.X, pady=(0, 12))
+        
+        self.auto_load_master_var = tk.BooleanVar(value=current_prefs.get('auto_load_master_list', True))
+        auto_load_master_check = tk.Checkbutton(auto_load_frame, 
+                                               text="Auto-load Master List on startup", 
+                                               variable=self.auto_load_master_var, 
+                                               command=self._update_auto_load_master_setting,
+                                               font=NORMAL_FONT, bg=THEME_COLORS['surface'],
+                                               fg=THEME_COLORS['text'])
+        auto_load_master_check.pack(side=tk.LEFT)
+        
+        # Clipboard integration checkbox
+        clipboard_frame = tk.Frame(prefs_frame, bg=THEME_COLORS['surface'])
+        clipboard_frame.pack(fill=tk.X, pady=(0, 12))
+        
+        self.clipboard_var = tk.BooleanVar(value=current_prefs.get('clipboard_integration', True))
+        clipboard_check = tk.Checkbutton(clipboard_frame, 
+                                        text="Copy scanned data to clipboard", 
+                                        variable=self.clipboard_var, 
+                                        command=self._update_clipboard_setting,
+                                        font=NORMAL_FONT, bg=THEME_COLORS['surface'],
+                                        fg=THEME_COLORS['text'])
+        clipboard_check.pack(side=tk.LEFT)
+        
+        # Notifications checkbox
+        notifications_frame = tk.Frame(prefs_frame, bg=THEME_COLORS['surface'])
+        notifications_frame.pack(fill=tk.X, pady=(0, 12))
+        
+        self.notifications_var = tk.BooleanVar(value=current_prefs.get('notifications_enabled', True))
+        notifications_check = tk.Checkbutton(notifications_frame, 
+                                            text="Show notifications for scan events", 
+                                            variable=self.notifications_var, 
+                                            command=self._update_notifications_setting,
+                                            font=NORMAL_FONT, bg=THEME_COLORS['surface'],
+                                            fg=THEME_COLORS['text'])
+        notifications_check.pack(side=tk.LEFT)
+    
     def _bind_mousewheel_to_widget(self, widget):
         """Bind mouse wheel to a widget and all its children."""
         def _on_mousewheel(event):
@@ -371,6 +461,57 @@ class SettingsTab:
         except Exception:
             self.sheets_status.set_status('error')
             self.sheets_status.set_text("Not connected")
+    
+    def refresh_configuration(self):
+        """Refresh the configuration fields with current loaded values."""
+        try:
+            # Get current configuration
+            current_config = self.app_manager.config_manager.get_google_sheets_config()
+            
+            if current_config:
+                # Update main spreadsheet fields
+                if hasattr(self, 'spreadsheet_entry'):
+                    current_value = self.spreadsheet_entry.get()
+                    new_value = current_config.spreadsheet_id
+                    if current_value != new_value:
+                        self.spreadsheet_entry.configure(state='normal')
+                        self.spreadsheet_entry.delete(0, tk.END)
+                        self.spreadsheet_entry.insert(0, new_value)
+                        self.spreadsheet_entry.configure(state='readonly')
+                
+                if hasattr(self, 'sheet_name_entry'):
+                    current_value = self.sheet_name_entry.get()
+                    new_value = current_config.sheet_name
+                    if current_value != new_value:
+                        self.sheet_name_entry.configure(state='normal')
+                        self.sheet_name_entry.delete(0, tk.END)
+                        self.sheet_name_entry.insert(0, new_value)
+                        self.sheet_name_entry.configure(state='readonly')
+                
+                # Update master list fields
+                if hasattr(self, 'master_spreadsheet_entry'):
+                    current_value = self.master_spreadsheet_entry.get()
+                    new_value = current_config.master_list_spreadsheet_id
+                    if current_value != new_value:
+                        self.master_spreadsheet_entry.configure(state='normal')
+                        self.master_spreadsheet_entry.delete(0, tk.END)
+                        self.master_spreadsheet_entry.insert(0, new_value)
+                        self.master_spreadsheet_entry.configure(state='readonly')
+                
+                if hasattr(self, 'master_sheet_name_entry'):
+                    current_value = self.master_sheet_name_entry.get()
+                    new_value = current_config.master_list_sheet_name
+                    if current_value != new_value:
+                        self.master_sheet_name_entry.configure(state='normal')
+                        self.master_sheet_name_entry.delete(0, tk.END)
+                        self.master_sheet_name_entry.insert(0, new_value)
+                        self.master_sheet_name_entry.configure(state='readonly')
+                
+                if self.callbacks.get('update_status'):
+                    self.callbacks['update_status']("Configuration refreshed")
+        except Exception as e:
+            if self.callbacks.get('update_status'):
+                self.callbacks['update_status'](f"Error refreshing configuration: {str(e)}")
     
     def _auto_connect_to_sheets(self):
         """Automatically connect to sheets using default settings."""
@@ -553,6 +694,38 @@ class SettingsTab:
         enabled = "enabled" if self.auto_load_var.get() else "disabled"
         if self.callbacks.get('update_status'):
             self.callbacks['update_status'](f"Auto-load {enabled}")
+    
+    def _update_auto_connect_setting(self):
+        """Update the auto-connect setting."""
+        enabled = self.auto_connect_var.get()
+        self.app_manager.config_manager.update_user_preferences(auto_connect_to_sheets=enabled)
+        status = "enabled" if enabled else "disabled"
+        if self.callbacks.get('update_status'):
+            self.callbacks['update_status'](f"Auto-connect to Google Sheets {status}")
+    
+    def _update_auto_load_master_setting(self):
+        """Update the auto-load master list setting."""
+        enabled = self.auto_load_master_var.get()
+        self.app_manager.config_manager.update_user_preferences(auto_load_master_list=enabled)
+        status = "enabled" if enabled else "disabled"
+        if self.callbacks.get('update_status'):
+            self.callbacks['update_status'](f"Auto-load Master List {status}")
+    
+    def _update_clipboard_setting(self):
+        """Update the clipboard integration setting."""
+        enabled = self.clipboard_var.get()
+        self.app_manager.config_manager.update_user_preferences(clipboard_integration=enabled)
+        status = "enabled" if enabled else "disabled"
+        if self.callbacks.get('update_status'):
+            self.callbacks['update_status'](f"Clipboard integration {status}")
+    
+    def _update_notifications_setting(self):
+        """Update the notifications setting."""
+        enabled = self.notifications_var.get()
+        self.app_manager.config_manager.update_user_preferences(notifications_enabled=enabled)
+        status = "enabled" if enabled else "disabled"
+        if self.callbacks.get('update_status'):
+            self.callbacks['update_status'](f"Notifications {status}")
     
     def _auto_load_master_list_data(self):
         """Automatically load master list data."""

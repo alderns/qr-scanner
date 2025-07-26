@@ -18,6 +18,7 @@ from googleapiclient.errors import HttpError
 from ..utils.logger import LoggerMixin, get_logger
 from ..utils.exceptions import SheetsError, AuthenticationError, NetworkError
 from ..config.paths import get_credentials_path, get_token_path
+from ..config.settings import DEFAULT_MASTER_LIST_SHEET_NAME
 
 logger = get_logger(__name__)
 
@@ -27,7 +28,7 @@ class SheetConfig:
     """Configuration for Google Sheets operations."""
     spreadsheet_id: str
     sheet_name: str
-    master_list_sheet: str = "MasterList"
+    master_list_sheet: str = DEFAULT_MASTER_LIST_SHEET_NAME
     master_list_spreadsheet_id: Optional[str] = None
     master_list_sheet_name: Optional[str] = None
     credentials_file: Optional[str] = None

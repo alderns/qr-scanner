@@ -15,12 +15,11 @@ CAMERA_RESOLUTION = (640, 480)
 CAMERA_FPS = 30
 
 SCOPES = ['https://www.googleapis.com/auth/spreadsheets']
-DEFAULT_SPREADSHEET_ID = "1PjW2-qgjWs5123qkzVyOBc-OKs2Ygk1143zkl_CymwQ"
-DEFAULT_SHEET_NAME = "Scanner"
-MASTER_LIST_SHEET = "MasterList"
+DEFAULT_SPREADSHEET_ID = "1kS2neHeebqvfSNAU0vjRz-8DPldVNYnpmZqwlJObWbI"
+DEFAULT_SHEET_NAME = "Attendance Log"
 
 # Master List Configuration
-DEFAULT_MASTER_LIST_SPREADSHEET_ID = ""  # Leave empty to use main spreadsheet, or set to separate spreadsheet ID
+DEFAULT_MASTER_LIST_SPREADSHEET_ID = "1PjW2-qgjWs5123qkzVyOBc-OKs2Ygk1143zkl_CymwQ"  # Master list spreadsheet ID
 DEFAULT_MASTER_LIST_SHEET_NAME = "MasterList"
 
 CREDENTIALS_FILE = "credentials.json"

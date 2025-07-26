@@ -53,9 +53,11 @@
   "clipboard_integration": true,
   "notifications_enabled": true,
   "dark_mode": false,
+  "auto_connect_to_sheets": true,
+  "auto_load_master_list": true,
   "_metadata": {
     "version": "2.0.0",
-    "last_modified": "2025-07-25T21:12:24.309712",
+    "last_modified": "2025-07-26T19:22:13.953485",
     "exported_by": "QR Scanner Config Manager"
   }
 }

@@ -12,6 +12,7 @@ from ..services.sheets_service import GoogleSheetsService, SheetConfig, ScanData
 from ..services.volunteer_service import VolunteerService
 from ..utils.common_utils import CallbackManager, StateManager, RetryManager
 from ..config.config_manager import ConfigManager, ApplicationConfig
+from src.config.settings import DEFAULT_MASTER_LIST_SHEET_NAME
 
 
 class TestScanService(unittest.TestCase):
@@ -103,7 +104,7 @@ class TestGoogleSheetsService(unittest.TestCase):
         self.config = SheetConfig(
             spreadsheet_id='test_spreadsheet_id',
             sheet_name='test_sheet',
-            master_list_sheet='test_master_list'
+            master_list_sheet=DEFAULT_MASTER_LIST_SHEET_NAME
         )
         self.sheets_service = GoogleSheetsService(self.config)
     

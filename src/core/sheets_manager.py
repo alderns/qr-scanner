@@ -15,6 +15,7 @@ from googleapiclient.errors import HttpError
 from ..utils.logger import get_logger
 from ..config.paths import get_credentials_path, get_token_path
 from ..utils.name_parser import extract_names_from_qr_data, clean_name
+from ..config.settings import DEFAULT_MASTER_LIST_SHEET_NAME
 
 logger = get_logger(__name__)
 
@@ -24,10 +25,12 @@ class GoogleSheetsManager:
     
     def __init__(self):
         self.sheets_service = None
+        # Initialize with default values
         self.spreadsheet_id = None
-        self.sheet_name = "QR_Scans"
-        self.master_list_sheet = "MasterList"
-        self.master_list_spreadsheet_id = None  # Separate spreadsheet for master list
+        self.sheet_name = None
+        self.master_list_sheet = DEFAULT_MASTER_LIST_SHEET_NAME
+        self.master_list_spreadsheet_id = None
+        self.master_list_sheet_name = DEFAULT_MASTER_LIST_SHEET_NAME
         self.master_list_data = []
         self.credentials_file = None
         self.token_file = None

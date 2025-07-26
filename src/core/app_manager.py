@@ -14,6 +14,7 @@ from ..utils.common_utils import CallbackManager, StateManager, RetryManager
 from ..config.paths import ensure_directories
 from ..config.config_manager import ConfigManager
 from ..config.settings import *
+from ..config.settings import DEFAULT_MASTER_LIST_SHEET_NAME
 from .camera_manager import CameraManager
 from .sheets_manager import GoogleSheetsManager
 from .scan_processor import ScanProcessor
@@ -221,6 +222,102 @@ class QRScannerApp(LoggerMixin):
                 self.root.after(0, self.gui_callback, 'credentials_status', 
                               {'status': 'error', 'message': f'Error: {str(e)}'})
     
+    def _auto_connect_to_sheets(self):
+        """Automatically connect to Google Sheets if enabled in configuration."""
+        try:
+            # Check if auto-connect is enabled
+            config = self.config_manager.get_config()
+            if not config.auto_connect_to_sheets:
+                self.log_info("Auto-connect to Google Sheets is disabled")
+                return
+            
+            # Check if credentials are available
+            if not self.check_credentials():
+                self.log_info("No credentials available for auto-connect")
+                if self.status_callback:
+                    self.status_callback("Please setup Google Sheets credentials first")
+                return
+            
+            # Get configuration
+            sheets_config = self.config_manager.get_google_sheets_config()
+            spreadsheet_id = sheets_config.spreadsheet_id
+            sheet_name = sheets_config.sheet_name
+            
+            if not spreadsheet_id or not sheet_name:
+                self.log_warning("No spreadsheet ID or sheet name configured for auto-connect")
+                if self.status_callback:
+                    self.status_callback("Please configure spreadsheet settings")
+                return
+            
+            # Attempt to connect
+            self.log_info("Attempting auto-connect to Google Sheets...")
+            if self.status_callback:
+                self.status_callback("Auto-connecting to Google Sheets...")
+            
+            try:
+                spreadsheet_title = self.connect_to_sheets(spreadsheet_id, sheet_name)
+                self.log_info(f"Auto-connected to Google Sheets: {spreadsheet_title}")
+                
+                # Auto-load master list if enabled
+                if config.auto_load_master_list:
+                    self._auto_load_master_list()
+                    
+            except Exception as e:
+                self.log_error(f"Auto-connect failed: {str(e)}")
+                if self.status_callback:
+                    self.status_callback(f"Auto-connect failed: {str(e)}")
+                if self.gui_callback:
+                    self.root.after(0, self.gui_callback, 'sheets_status', 
+                                  {'status': 'error', 'text': f'Auto-connect failed: {str(e)}'})
+                    
+        except Exception as e:
+            self.log_error(f"Error in auto-connect: {str(e)}")
+            if self.status_callback:
+                self.status_callback(f"Auto-connect error: {str(e)}")
+    
+    def _auto_load_master_list(self):
+        """Automatically load master list if enabled."""
+        try:
+            config = self.config_manager.get_config()
+            if not config.auto_load_master_list:
+                self.log_info("Auto-load master list is disabled")
+                return
+            
+            if not self.is_sheets_connected():
+                self.log_warning("Not connected to Google Sheets, cannot load master list")
+                return
+            
+            sheets_config = self.config_manager.get_google_sheets_config()
+            master_spreadsheet_id = sheets_config.master_list_spreadsheet_id
+            master_sheet_name = sheets_config.master_list_sheet_name
+            
+            if not master_spreadsheet_id or not master_sheet_name:
+                self.log_warning("No master list configuration for auto-load")
+                return
+            
+            # Update master list configuration
+            self.update_master_list_config(master_spreadsheet_id, master_sheet_name)
+            
+            # Load master list
+            self.log_info("Auto-loading master list...")
+            if self.status_callback:
+                self.status_callback("Auto-loading master list...")
+            
+            count = self.load_master_list()
+            if count > 0:
+                self.log_info(f"Auto-loaded {count} records from master list")
+                if self.status_callback:
+                    self.status_callback(f"Auto-loaded {count} records from master list")
+            else:
+                self.log_warning("No data found in master list")
+                if self.status_callback:
+                    self.status_callback("No data found in master list")
+                    
+        except Exception as e:
+            self.log_error(f"Error in auto-load master list: {str(e)}")
+            if self.status_callback:
+                self.status_callback(f"Auto-load master list error: {str(e)}")
+    
     def _handle_scan_actions(self, data: str):
         """Handle scan actions like clipboard copy and typing simulation."""
         try:
@@ -261,18 +358,16 @@ class QRScannerApp(LoggerMixin):
     def _initialize_services(self):
         """Initialize service layer components."""
         try:
-            # Get Google Sheets configuration
-            sheets_config = self.config_manager.get_google_sheets_config()
-            
             # Initialize sheets service with configuration
-            service_config = SheetConfig(
+            sheets_config = self.config_manager.get_google_sheets_config()
+            sheet_config = SheetConfig(
                 spreadsheet_id=sheets_config.spreadsheet_id,
                 sheet_name=sheets_config.sheet_name,
-                master_list_sheet=sheets_config.master_list_sheet,
+                master_list_sheet=DEFAULT_MASTER_LIST_SHEET_NAME,
                 master_list_spreadsheet_id=sheets_config.master_list_spreadsheet_id,
                 master_list_sheet_name=sheets_config.master_list_sheet_name
             )
-            self.sheets_service = GoogleSheetsService(service_config)
+            self.sheets_service = GoogleSheetsService(sheet_config)
             
             # Initialize volunteer service with sheets manager
             self.volunteer_service = VolunteerService(self.sheets_manager)
@@ -304,6 +399,9 @@ class QRScannerApp(LoggerMixin):
             # Update status
             if self.status_callback:
                 self.status_callback("Application started")
+            
+            # Auto-connect to Google Sheets if enabled
+            self._auto_connect_to_sheets()
             
             return True
             

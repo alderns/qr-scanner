@@ -22,7 +22,7 @@ class GoogleSheetsConfig:
     """Google Sheets configuration."""
     spreadsheet_id: str = DEFAULT_SPREADSHEET_ID
     sheet_name: str = DEFAULT_SHEET_NAME
-    master_list_sheet: str = MASTER_LIST_SHEET
+    master_list_sheet: str = DEFAULT_MASTER_LIST_SHEET_NAME
     master_list_spreadsheet_id: str = DEFAULT_MASTER_LIST_SPREADSHEET_ID
     master_list_sheet_name: str = DEFAULT_MASTER_LIST_SHEET_NAME
     credentials_file: str = CREDENTIALS_FILE
@@ -97,6 +97,8 @@ class ApplicationConfig:
     clipboard_integration: bool = True
     notifications_enabled: bool = True
     dark_mode: bool = False
+    auto_connect_to_sheets: bool = True
+    auto_load_master_list: bool = True
     
     def __post_init__(self):
         if self.google_sheets is None:
@@ -179,6 +181,22 @@ class ConfigManager(LoggerMixin):
     def get_logging_config(self) -> LoggingConfig:
         """Get logging configuration."""
         return self.config.logging
+    
+    def get_user_preferences(self) -> dict:
+        """
+        Get user preferences.
+        
+        Returns:
+            Dictionary containing user preferences
+        """
+        return {
+            'auto_save_enabled': self.config.auto_save_enabled,
+            'clipboard_integration': self.config.clipboard_integration,
+            'notifications_enabled': self.config.notifications_enabled,
+            'dark_mode': self.config.dark_mode,
+            'auto_connect_to_sheets': self.config.auto_connect_to_sheets,
+            'auto_load_master_list': self.config.auto_load_master_list
+        }
     
     def update_google_sheets_config(self, **kwargs) -> bool:
         """
@@ -333,7 +351,8 @@ class ConfigManager(LoggerMixin):
         try:
             valid_preferences = [
                 'auto_save_enabled', 'clipboard_integration', 
-                'notifications_enabled', 'dark_mode'
+                'notifications_enabled', 'dark_mode', 'auto_connect_to_sheets',
+                'auto_load_master_list'
             ]
             
             for key, value in kwargs.items():

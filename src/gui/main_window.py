@@ -235,6 +235,10 @@ class MainWindow:
         self.camera_status.set_status('neutral')
         self.camera_status.set_text("Camera Ready")
         
+        # Refresh settings tab configuration with loaded values
+        if hasattr(self, 'settings_tab'):
+            self.root.after(100, self.settings_tab.refresh_configuration)
+        
         # Auto-start camera after a short delay
         self.root.after(1000, self._auto_start_camera)
     
