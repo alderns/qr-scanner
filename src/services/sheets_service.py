@@ -171,7 +171,6 @@ class GoogleSheetsService(LoggerMixin):
                 scan_data.data,
                 date_str,
                 time_str,
-                scan_data.formatted_name,
                 scan_data.status
             ]]
             
@@ -188,12 +187,12 @@ class GoogleSheetsService(LoggerMixin):
                 
                 result = self.sheets_service.spreadsheets().values().append(
                     spreadsheetId=self.config.spreadsheet_id,
-                    range=f"{self.config.sheet_name}!A:E",
+                    range=f"{self.config.sheet_name}!A:D",
                     valueInputOption='USER_ENTERED',
                     body=body
                 ).execute()
                 
-                self.log_info(f"Added new row for ID: {scan_data.data} -> {scan_data.formatted_name}")
+                self.log_info(f"Added new row for ID: {scan_data.data}")
             
             return True
             
@@ -412,13 +411,13 @@ class GoogleSheetsService(LoggerMixin):
     def _setup_scan_sheet_headers(self):
         """Setup headers for the scan sheet."""
         try:
-            headers = [['ID Number', 'Date', 'Time In', 'Name', 'Status']]
+            headers = [['ID Number', 'Date', 'Time In', 'Status']]
             
             body = {'values': headers}
             
             self.sheets_service.spreadsheets().values().update(
                 spreadsheetId=self.config.spreadsheet_id,
-                range=f"{self.config.sheet_name}!A1:E1",
+                range=f"{self.config.sheet_name}!A1:D1",
                 valueInputOption='RAW',
                 body=body
             ).execute()
@@ -434,13 +433,13 @@ class GoogleSheetsService(LoggerMixin):
             # Check if headers exist
             result = self.sheets_service.spreadsheets().values().get(
                 spreadsheetId=self.config.spreadsheet_id,
-                range=f"{self.config.sheet_name}!A1:E1"
+                range=f"{self.config.sheet_name}!A1:D1"
             ).execute()
             
             values = result.get('values', [])
             
             # If no headers or wrong headers, set them up
-            if not values or len(values[0]) < 5 or values[0][0] != 'ID Number':
+            if not values or len(values[0]) < 4 or values[0][0] != 'ID Number':
                 self._setup_scan_sheet_headers()
                 self.log_info("Updated headers for existing scan sheet")
             
@@ -496,7 +495,7 @@ class GoogleSheetsService(LoggerMixin):
             # Get all data from the scan sheet
             result = self.sheets_service.spreadsheets().values().get(
                 spreadsheetId=self.config.spreadsheet_id,
-                range=f"{self.config.sheet_name}!A:E"
+                range=f"{self.config.sheet_name}!A:D"
             ).execute()
             
             values = result.get('values', [])

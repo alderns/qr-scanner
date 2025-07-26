@@ -211,8 +211,8 @@ class GoogleSheetsManager:
     def _setup_scan_sheet_headers(self):
         """Setup headers for the scan sheet."""
         try:
-            # Set up headers: ID Number, Date, Time In, Name, Status
-            headers = [['ID Number', 'Date', 'Time In', 'Name', 'Status']]
+            # Set up headers: ID Number, Date, Time In, Status
+            headers = [['ID Number', 'Date', 'Time In', 'Status']]
             
             body = {
                 'values': headers
@@ -220,7 +220,7 @@ class GoogleSheetsManager:
             
             self.sheets_service.spreadsheets().values().update(
                 spreadsheetId=self.spreadsheet_id,
-                range=f"{self.sheet_name}!A1:E1",
+                range=f"{self.sheet_name}!A1:D1",
                 valueInputOption='RAW',
                 body=body
             ).execute()
@@ -236,13 +236,13 @@ class GoogleSheetsManager:
             # Check if headers exist
             result = self.sheets_service.spreadsheets().values().get(
                 spreadsheetId=self.spreadsheet_id,
-                range=f"{self.sheet_name}!A1:E1"
+                range=f"{self.sheet_name}!A1:D1"
             ).execute()
             
             values = result.get('values', [])
             
             # If no headers or wrong headers, set them up
-            if not values or len(values[0]) < 5 or values[0][0] != 'ID Number':
+            if not values or len(values[0]) < 4 or values[0][0] != 'ID Number':
                 self._setup_scan_sheet_headers()
                 logger.info("Updated headers for existing scan sheet")
             
@@ -279,8 +279,8 @@ class GoogleSheetsManager:
                 # Set status for found users
                 status = "Present"
                 
-                # Prepare the data: [ID Number, Date, Time In, Name, Status]
-                values = [[data, date_str, time_str, formatted_name, status]]
+                # Prepare the data: [ID Number, Date, Time In, Status]
+                values = [[data, date_str, time_str, status]]
                 
                 # First, try to find an existing row with the same ID
                 existing_row = self._find_row_by_id(data)
@@ -295,12 +295,12 @@ class GoogleSheetsManager:
                     
                     result = self.sheets_service.spreadsheets().values().append(
                         spreadsheetId=self.spreadsheet_id,
-                        range=f"{self.sheet_name}!A:E",
+                        range=f"{self.sheet_name}!A:D",
                         valueInputOption='USER_ENTERED',
                         body=body
                     ).execute()
                     
-                    logger.info(f"Added new row for ID: {data} (Name: {first_name} {last_name})")
+                    logger.info(f"Added new row for ID: {data}")
                 
                 return True
             else:
@@ -529,7 +529,7 @@ class GoogleSheetsManager:
             # Get all data from the scan sheet
             result = self.sheets_service.spreadsheets().values().get(
                 spreadsheetId=self.spreadsheet_id,
-                range=f"{self.sheet_name}!A:E"
+                range=f"{self.sheet_name}!A:D"
             ).execute()
             
             values = result.get('values', [])
