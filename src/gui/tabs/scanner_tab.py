@@ -77,10 +77,7 @@ class ScannerTab:
                                         command=self._toggle_camera)
         self.start_button.pack(side=tk.LEFT)
         
-        copy_button = ModernButton(control_frame, text="Copy Last Scan", 
-                                  style='secondary',
-                                  command=self._copy_last_scan)
-        copy_button.pack(side=tk.LEFT, padx=(COMPONENT_SPACING['button_margin'], 0))
+        # Copy button removed
         
         # Right panel - Results
         right_panel = tk.Frame(self.parent, bg=THEME_COLORS['background'])
@@ -131,12 +128,7 @@ class ScannerTab:
         if self.callbacks.get('update_status'):
             self.callbacks['update_status']("Camera stopped")
     
-    def _copy_last_scan(self):
-        """Copy the last scan to clipboard."""
-        last_scan = self.app_manager.get_last_scan()
-        if last_scan and self.app_manager.copy_to_clipboard(last_scan):
-            if self.callbacks.get('update_status'):
-                self.callbacks['update_status']("Last scan copied to clipboard")
+
     
     def update_video_frame(self, photo):
         """Update the video frame with a new image."""

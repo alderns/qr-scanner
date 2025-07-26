@@ -171,11 +171,7 @@ class MainWindow:
                                         command=self._toggle_camera)
         self.start_button.pack(side=tk.LEFT, padx=(0, 10))
         
-        # Secondary actions
-        copy_button = ModernButton(controls_frame, text="Copy Last", 
-                                  style='secondary',
-                                  command=self._copy_last_scan)
-        copy_button.pack(side=tk.LEFT, padx=(0, 10))
+        # Secondary actions removed - copy button deleted
         
         # Last scan display (simplified)
         self.last_scan_text = tk.Text(main_frame, height=3, wrap=tk.WORD,
@@ -283,13 +279,7 @@ class MainWindow:
         self.video_frame.config(text="Camera stopped", image="")
         self.update_status("Camera stopped")
     
-    def _copy_last_scan(self):
-        """Copy the last scan to clipboard."""
-        last_scan = self.app_manager.get_last_scan()
-        if last_scan and self.app_manager.copy_to_clipboard(last_scan):
-            self.update_status("Last scan copied to clipboard")
-        else:
-            self.update_status("No scan to copy")
+
     
     def update_video_frame(self, photo):
         """Update the video frame with a new image."""
