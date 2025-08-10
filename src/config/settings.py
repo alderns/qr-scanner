@@ -7,7 +7,7 @@ APP_DESCRIPTION = "Modern QR Code Scanner with Google Sheets Integration"
 
 WINDOW_TITLE = f"{APP_NAME} v{APP_VERSION}"
 WINDOW_SIZE = "1000x800"
-MIN_WINDOW_SIZE = "800x600"
+MIN_WINDOW_SIZE = "800x800"
 
 CAMERA_INDEX = 0
 SCAN_DELAY = 0.03
@@ -15,9 +15,13 @@ CAMERA_RESOLUTION = (640, 480)
 CAMERA_FPS = 30
 
 SCOPES = ['https://www.googleapis.com/auth/spreadsheets']
-DEFAULT_SPREADSHEET_ID = "1PjW2-qgjWs5123qkzVyOBc-OKs2Ygk1143zkl_CymwQ"
-DEFAULT_SHEET_NAME = "Scanner"
-MASTER_LIST_SHEET = "MasterList"
+DEFAULT_SPREADSHEET_ID = "1kS2neHeebqvfSNAU0vjRz-8DPldVNYnpmZqwlJObWbI"
+DEFAULT_SHEET_NAME = "Attendance Log"
+
+# Master List Configuration
+DEFAULT_MASTER_LIST_SPREADSHEET_ID = "1PjW2-qgjWs5123qkzVyOBc-OKs2Ygk1143zkl_CymwQ"  # Master list spreadsheet ID
+DEFAULT_MASTER_LIST_SHEET_NAME = "MasterList"
+
 CREDENTIALS_FILE = "credentials.json"
 TOKEN_FILE = "token.pickle"
 
@@ -32,7 +36,8 @@ SUPPORTED_EXPORT_TYPES = [
 NOTIFICATION_DURATION = 2.0
 NOTIFICATION_SIZE = "300x150"
 
-AUTO_SAVE_INTERVAL = 30
+# Auto-save settings
+AUTO_SAVE_INTERVAL = 300  # 5 minutes instead of 30 seconds
 MAX_HISTORY_ITEMS = 1000
 
 LOG_LEVEL = "INFO"

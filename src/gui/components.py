@@ -8,7 +8,7 @@ from tkinter import ttk
 import threading
 import time
 from typing import Optional, Callable, Any
-from ..config.theme import THEME_COLORS, NORMAL_FONT, SMALL_FONT, BUTTON_PADDING
+from ..config.theme import THEME_COLORS, NORMAL_FONT, SMALL_FONT, COMPONENT_SPACING, BUTTON_STYLES
 
 
 class Tooltip:
@@ -57,7 +57,9 @@ class Tooltip:
         self.tooltip.wm_geometry(f"+{x}+{y}")
         
         # Configure tooltip appearance
-        self.tooltip.configure(bg=THEME_COLORS['surface'], relief='solid', borderwidth=1)
+        self.tooltip.configure(bg=THEME_COLORS['surface'], relief='solid', borderwidth=1,
+                              highlightbackground=THEME_COLORS['border'],
+                              highlightcolor=THEME_COLORS['border'])
         
         # Create tooltip label
         label = tk.Label(self.tooltip, text=self.text, 
@@ -86,7 +88,14 @@ class Tooltip:
 class ModernButton(tk.Button):
     """Enhanced modern button with accessibility, tooltips, and performance optimizations."""
     
-    def __init__(self, parent, text="", tooltip="", command=None, **kwargs):
+    def __init__(self, parent, text="", tooltip="", command=None, style=None, **kwargs):
+        # Check if a predefined style is requested
+        if style and style in BUTTON_STYLES:
+            style_config = BUTTON_STYLES[style].copy()
+            # Override with any custom kwargs
+            style_config.update(kwargs)
+            kwargs = style_config
+        
         # Store the original background color
         self.original_bg = kwargs.get('bg', THEME_COLORS['surface'])
         self.original_fg = kwargs.get('fg', THEME_COLORS['text'])
@@ -99,8 +108,8 @@ class ModernButton(tk.Button):
         self.configure(
             relief=tk.FLAT,
             borderwidth=0,
-            padx=BUTTON_PADDING,
-            pady=8,
+            padx=COMPONENT_SPACING['button_padding_x'],
+            pady=COMPONENT_SPACING['button_padding_y'],
             font=NORMAL_FONT,
             cursor='hand2',
             bg=self.original_bg,
@@ -174,7 +183,7 @@ class ModernButton(tk.Button):
     
     def _on_focus_in(self, event):
         """Handle focus in for accessibility."""
-        self.configure(relief=tk.RAISED, borderwidth=2)
+        self.configure(relief=tk.RAISED, borderwidth=0)
     
     def _on_focus_out(self, event):
         """Handle focus out for accessibility."""
@@ -420,63 +429,4 @@ class VirtualizedTreeview(ttk.Treeview):
         pass
 
 
-class AsyncTaskManager:
-    """Manager for handling asynchronous tasks without blocking the GUI."""
-    
-    def __init__(self, gui_update_callback=None):
-        self.gui_update_callback = gui_update_callback
-        self.active_tasks = {}
-        self.task_counter = 0
-    
-    def run_task(self, task_func, task_name="", on_complete=None, on_error=None):
-        """Run a task asynchronously."""
-        task_id = self.task_counter
-        self.task_counter += 1
-        
-        def task_wrapper():
-            try:
-                result = task_func()
-                if self.gui_update_callback:
-                    self.gui_update_callback(lambda: self._handle_completion(task_id, result, on_complete))
-            except Exception as exception:
-                if self.gui_update_callback:
-                    self.gui_update_callback(lambda: self._handle_error(task_id, exception, on_error))
-        
-        # Store task info
-        self.active_tasks[task_id] = {
-            'name': task_name,
-            'start_time': time.time(),
-            'thread': threading.Thread(target=task_wrapper, daemon=True)
-        }
-        
-        # Start task
-        self.active_tasks[task_id]['thread'].start()
-        
-        return task_id
-    
-    def _handle_completion(self, task_id, result, on_complete):
-        """Handle task completion."""
-        if task_id in self.active_tasks:
-            del self.active_tasks[task_id]
-        
-        if on_complete:
-            on_complete(result)
-    
-    def _handle_error(self, task_id, error, on_error):
-        """Handle task error."""
-        if task_id in self.active_tasks:
-            del self.active_tasks[task_id]
-        
-        if on_error:
-            on_error(error)
-    
-    def cancel_task(self, task_id):
-        """Cancel a running task."""
-        if task_id in self.active_tasks:
-            # Note: Python threads can't be forcefully terminated
-            # This just removes the task from tracking
-            del self.active_tasks[task_id]
-    
-    def get_active_tasks(self):
-        """Get list of active tasks."""
-        return list(self.active_tasks.keys()) 
+ 

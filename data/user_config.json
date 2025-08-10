@@ -1,0 +1,63 @@
+{
+  "app_name": "QR Code Scanner",
+  "app_version": "2.0.0",
+  "app_description": "Modern QR Code Scanner with Google Sheets Integration",
+  "google_sheets": {
+    "spreadsheet_id": "1kS2neHeebqvfSNAU0vjRz-8DPldVNYnpmZqwlJObWbI",
+    "sheet_name": "Attendance Log",
+    "master_list_sheet": "MasterList",
+    "master_list_spreadsheet_id": "1PjW2-qgjWs5123qkzVyOBc-OKs2Ygk1143zkl_CymwQ",
+    "master_list_sheet_name": "MasterList",
+    "credentials_file": "credentials.json",
+    "token_file": "token.pickle",
+    "scopes": [
+      "https://www.googleapis.com/auth/spreadsheets"
+    ]
+  },
+  "camera": {
+    "camera_index": 0,
+    "scan_delay": 0.03,
+    "resolution": [
+      640,
+      480
+    ],
+    "fps": 30,
+    "auto_start": false
+  },
+  "window": {
+    "title": "QR Code Scanner v2.0.0",
+    "size": "1000x800",
+    "min_size": "800x800",
+    "theme": "default",
+    "auto_save_position": true,
+    "remember_size": true
+  },
+  "performance": {
+    "thread_pool_size": 4,
+    "max_concurrent_scans": 2,
+    "cache_size": 100,
+    "auto_save_interval": 30,
+    "max_history_items": 1000,
+    "enable_performance_monitoring": true
+  },
+  "logging": {
+    "level": "INFO",
+    "format": "%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    "file": "qr_scanner.log",
+    "max_file_size": 10485760,
+    "backup_count": 5,
+    "enable_console_logging": true,
+    "enable_file_logging": true
+  },
+  "auto_save_enabled": true,
+  "clipboard_integration": true,
+  "notifications_enabled": true,
+  "dark_mode": false,
+  "auto_connect_to_sheets": true,
+  "auto_load_master_list": true,
+  "_metadata": {
+    "version": "2.0.0",
+    "last_modified": "2025-07-26T23:33:44.404065",
+    "exported_by": "QR Scanner Config Manager"
+  }
+}

@@ -15,6 +15,7 @@ from googleapiclient.errors import HttpError
 from ..utils.logger import get_logger
 from ..config.paths import get_credentials_path, get_token_path
 from ..utils.name_parser import extract_names_from_qr_data, clean_name
+from ..config.settings import DEFAULT_MASTER_LIST_SHEET_NAME
 
 logger = get_logger(__name__)
 
@@ -24,9 +25,12 @@ class GoogleSheetsManager:
     
     def __init__(self):
         self.sheets_service = None
+        # Initialize with default values
         self.spreadsheet_id = None
-        self.sheet_name = "QR_Scans"
-        self.master_list_sheet = "MasterList"
+        self.sheet_name = None
+        self.master_list_sheet = DEFAULT_MASTER_LIST_SHEET_NAME
+        self.master_list_spreadsheet_id = None
+        self.master_list_sheet_name = DEFAULT_MASTER_LIST_SHEET_NAME
         self.master_list_data = []
         self.credentials_file = None
         self.token_file = None
@@ -163,14 +167,14 @@ class GoogleSheetsManager:
             raise
     
     def _create_sheet_if_needed(self):
-        """Create the required sheets if they don't exist."""
+        """Create sheets if they don't exist."""
         try:
             # Get existing sheets
-            spreadsheet = self.sheets_service.spreadsheets().get(
+            result = self.sheets_service.spreadsheets().get(
                 spreadsheetId=self.spreadsheet_id
             ).execute()
             
-            existing_sheets = [sheet['properties']['title'] for sheet in spreadsheet['sheets']]
+            existing_sheets = [sheet['properties']['title'] for sheet in result['sheets']]
             
             # Create QR_Scans sheet if it doesn't exist
             if self.sheet_name not in existing_sheets:
@@ -178,11 +182,9 @@ class GoogleSheetsManager:
                 self._setup_scan_sheet_headers()
                 logger.info(f"Created sheet: {self.sheet_name}")
             
-            # Create MasterList sheet if it doesn't exist
-            if self.master_list_sheet not in existing_sheets:
-                self._create_sheet(self.master_list_sheet)
-                logger.info(f"Created sheet: {self.master_list_sheet}")
-                
+            # Note: MasterList sheet should be in a separate spreadsheet
+            # and will be created when needed in that spreadsheet
+            
         except Exception as e:
             logger.error(f"Error creating sheets: {str(e)}")
     
@@ -209,8 +211,8 @@ class GoogleSheetsManager:
     def _setup_scan_sheet_headers(self):
         """Setup headers for the scan sheet."""
         try:
-            # Set up headers: ID Number, Date, Time In, Name, Status
-            headers = [['ID Number', 'Date', 'Time In', 'Name', 'Status']]
+            # Set up headers: ID Number, Date, Time In, Status
+            headers = [['ID Number', 'Date', 'Time In', 'Status']]
             
             body = {
                 'values': headers
@@ -218,7 +220,7 @@ class GoogleSheetsManager:
             
             self.sheets_service.spreadsheets().values().update(
                 spreadsheetId=self.spreadsheet_id,
-                range=f"{self.sheet_name}!A1:E1",
+                range=f"{self.sheet_name}!A1:D1",
                 valueInputOption='RAW',
                 body=body
             ).execute()
@@ -234,13 +236,13 @@ class GoogleSheetsManager:
             # Check if headers exist
             result = self.sheets_service.spreadsheets().values().get(
                 spreadsheetId=self.spreadsheet_id,
-                range=f"{self.sheet_name}!A1:E1"
+                range=f"{self.sheet_name}!A1:D1"
             ).execute()
             
             values = result.get('values', [])
             
             # If no headers or wrong headers, set them up
-            if not values or len(values[0]) < 5 or values[0][0] != 'ID Number':
+            if not values or len(values[0]) < 4 or values[0][0] != 'ID Number':
                 self._setup_scan_sheet_headers()
                 logger.info("Updated headers for existing scan sheet")
             
@@ -252,7 +254,7 @@ class GoogleSheetsManager:
         return self.sheets_service is not None and self.spreadsheet_id is not None
     
     def add_scan_data(self, data, barcode_type):
-        """Add scan data to the Google Sheet."""
+        """Add or update scan data in the Google Sheet."""
         if not self.is_connected():
             logger.warning("Not connected to Google Sheets")
             return False
@@ -273,49 +275,41 @@ class GoogleSheetsManager:
                 logger.info(f"Found volunteer in master list: {first_name} {last_name}")
                 # Format name as "last name, first name"
                 formatted_name = f"{last_name}, {first_name}" if last_name and first_name else f"{first_name}{last_name}"
-            else:
-                # Check if QR data is already in "last name, first name" format
-                if ',' in data and not any(char in data for char in ['@', 'http', 'www', '.com', '.org']):
-                    # QR data appears to be a name in "last, first" format, use it directly
-                    formatted_name = data.strip()
-                    logger.info(f"Using QR data directly as name: {formatted_name}")
+                
+                # Set status for found users
+                status = "Present"
+                
+                # Prepare the data: [ID Number, Date, Time In, Status]
+                values = [[data, date_str, time_str, status]]
+                
+                # First, try to find an existing row with the same ID
+                existing_row = self._find_row_by_id(data)
+                
+                if existing_row is not None:
+                    # TEMPORARILY DISABLED: Skip updating existing rows to test
+                    logger.info(f"Found existing row for ID: {data} - skipping update to preserve formulas")
+                    return True
                 else:
-                    # Fallback to extracting names from QR data if not found in master list
-                    logger.debug(f"QR data for name extraction: '{data}'")
-                    first_name, last_name = extract_names_from_qr_data(data)
-                    first_name = clean_name(first_name)
-                    last_name = clean_name(last_name)
-                    logger.warning(f"Volunteer ID '{data}' not found in master list, using extracted names: {first_name} {last_name}")
-                    logger.debug(f"Extracted first_name: '{first_name}', last_name: '{last_name}'")
-                    # Format name as "last name, first name"
-                    formatted_name = f"{last_name}, {first_name}" if last_name and first_name else f"{first_name}{last_name}"
-            
-            logger.debug(f"Final formatted name: '{formatted_name}'")
-            
-            # Set status (you can customize this based on your needs)
-            status = "Present"
-            
-            # Prepare the data: [ID Number, Date, Time In, Name, Status]
-            values = [[data, date_str, time_str, formatted_name, status]]
-            
-            # Append to the sheet
-            body = {
-                'values': values
-            }
-            
-            result = self.sheets_service.spreadsheets().values().append(
-                spreadsheetId=self.spreadsheet_id,
-                range=f"{self.sheet_name}!A:E",
-                valueInputOption='RAW',
-                insertDataOption='INSERT_ROWS',
-                body=body
-            ).execute()
-            
-            logger.info(f"Added scan data to sheets: {data} (Name: {first_name} {last_name})")
-            return True
+                    # Append new row if no existing row found
+                    body = {'values': values}
+                    
+                    result = self.sheets_service.spreadsheets().values().append(
+                        spreadsheetId=self.spreadsheet_id,
+                        range=f"{self.sheet_name}!A:D",
+                        valueInputOption='USER_ENTERED',
+                        body=body
+                    ).execute()
+                    
+                    logger.info(f"Added new row for ID: {data}")
+                
+                return True
+            else:
+                # User not found in master list - do not add to sheets
+                logger.warning(f"Volunteer ID '{data}' not found in master list - not adding to sheets")
+                return False
             
         except Exception as e:
-            logger.error(f"Error adding scan data: {str(e)}")
+            logger.error(f"Error adding/updating scan data: {str(e)}")
             return False
     
     def load_master_list(self):
@@ -325,9 +319,15 @@ class GoogleSheetsManager:
             return 0
         
         try:
+            # Use Master List specific spreadsheet ID if configured, otherwise use main spreadsheet
+            master_spreadsheet_id = getattr(self, 'master_list_spreadsheet_id', None) or self.spreadsheet_id
+            
+            # Ensure master list sheet exists in the target spreadsheet
+            self._ensure_master_list_sheet_exists(master_spreadsheet_id)
+            
             # Get all data from MasterList sheet
             result = self.sheets_service.spreadsheets().values().get(
-                spreadsheetId=self.spreadsheet_id,
+                spreadsheetId=master_spreadsheet_id,
                 range=f"{self.master_list_sheet}!A:Z"
             ).execute()
             
@@ -342,7 +342,7 @@ class GoogleSheetsManager:
             self.master_list_data = values[1:] if len(values) > 1 else []
             
             count = len(self.master_list_data)
-            logger.info(f"Loaded {count} records from master list")
+            logger.info(f"Loaded {count} records from master list (spreadsheet: {master_spreadsheet_id})")
             
             # Debug: Log the headers and first few rows to understand the structure
             if count > 0:
@@ -355,6 +355,63 @@ class GoogleSheetsManager:
         except Exception as e:
             logger.error(f"Error loading master list: {str(e)}")
             return 0
+    
+    def _ensure_master_list_sheet_exists(self, spreadsheet_id):
+        """Ensure the master list sheet exists in the specified spreadsheet."""
+        try:
+            # Get existing sheets in the master list spreadsheet
+            result = self.sheets_service.spreadsheets().get(
+                spreadsheetId=spreadsheet_id
+            ).execute()
+            
+            existing_sheets = [sheet['properties']['title'] for sheet in result['sheets']]
+            
+            # Create MasterList sheet if it doesn't exist
+            if self.master_list_sheet not in existing_sheets:
+                self._create_sheet_in_spreadsheet(spreadsheet_id, self.master_list_sheet)
+                logger.info(f"Created MasterList sheet in spreadsheet: {spreadsheet_id}")
+            
+        except Exception as e:
+            logger.error(f"Error ensuring master list sheet exists: {str(e)}")
+    
+    def _create_sheet_in_spreadsheet(self, spreadsheet_id, sheet_name):
+        """Create a new sheet in a specific spreadsheet."""
+        try:
+            request = {
+                'addSheet': {
+                    'properties': {
+                        'title': sheet_name
+                    }
+                }
+            }
+            
+            self.sheets_service.spreadsheets().batchUpdate(
+                spreadsheetId=spreadsheet_id,
+                body={'requests': [request]}
+            ).execute()
+            
+        except Exception as e:
+            logger.error(f"Error creating sheet {sheet_name} in spreadsheet {spreadsheet_id}: {str(e)}")
+            raise
+    
+    def update_master_list_config(self, spreadsheet_id: str, sheet_name: str):
+        """
+        Update the Master List configuration.
+        
+        Args:
+            spreadsheet_id: Master List spreadsheet ID
+            sheet_name: Master List sheet name
+        """
+        try:
+            # Store the new configuration
+            self.master_list_spreadsheet_id = spreadsheet_id
+            self.master_list_sheet = sheet_name
+            
+            logger.info(f"Updated Master List config: {spreadsheet_id}/{sheet_name}")
+            
+        except Exception as e:
+            logger.error(f"Error updating Master List config: {str(e)}")
+            raise
     
     def search_master_list(self, search_term):
         """Search the master list for a specific term."""
@@ -454,6 +511,42 @@ class GoogleSheetsManager:
         
         logger.warning(f"Volunteer ID '{volunteer_id}' not found in master list")
         return None
+    
+    def _find_row_by_id(self, volunteer_id: str):
+        """
+        Find the row number (0-based index) of an existing record with the given ID in the scan sheet.
+        
+        Args:
+            volunteer_id: The volunteer ID to search for
+            
+        Returns:
+            Row number (0-based) if found, None if not found
+        """
+        try:
+            if not self.is_connected():
+                return None
+            
+            # Get all data from the scan sheet
+            result = self.sheets_service.spreadsheets().values().get(
+                spreadsheetId=self.spreadsheet_id,
+                range=f"{self.sheet_name}!A:D"
+            ).execute()
+            
+            values = result.get('values', [])
+            
+            if not values:
+                return None
+            
+            # Skip header row, search in data rows
+            for i, row in enumerate(values[1:], start=1):  # start=1 to skip header
+                if len(row) > 0 and str(row[0]).strip() == str(volunteer_id).strip():
+                    return i  # Return 0-based row index
+            
+            return None
+            
+        except Exception as e:
+            logger.error(f"Error finding row by ID: {str(e)}")
+            return None
     
     def get_master_list_data(self):
         """Get the loaded master list data."""

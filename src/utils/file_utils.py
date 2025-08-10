@@ -10,8 +10,9 @@ from datetime import datetime
 from pathlib import Path
 from typing import List, Dict, Any, Optional, Union
 import zipfile
+import time
 
-from .logger import get_logger, log_function_call, log_performance
+from .logger import get_logger, log_function_call
 from ..config.paths import (
     APP_DATA_DIR, EXPORT_DIR, HISTORY_FILE, 
     ensure_directories, SCAN_HISTORY_PATTERN
@@ -34,15 +35,15 @@ class FileManager:
         
         Args:
             history_data: List of scan history items
-            filename: Optional custom filename
+            filename: Optional custom filename (defaults to single history file)
         
         Returns:
             True if successful, False otherwise
         """
         try:
             if filename is None:
-                timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-                filename = f"scan_history_{timestamp}.json"
+                # Use a single file for current session history
+                filename = "scan_history_current.json"
             
             file_path = APP_DATA_DIR / filename
             
@@ -50,10 +51,81 @@ class FileManager:
                 json.dump(history_data, f, indent=2, ensure_ascii=False)
             
             self.logger.info(f"Scan history saved to {file_path}")
+            
+            # Clean up old history files periodically
+            self._cleanup_old_history_files()
+            
             return True
             
         except Exception as e:
             self.logger.error(f"Failed to save scan history: {str(e)}")
+            return False
+    
+    def _cleanup_old_history_files(self, max_files: int = 10, max_age_days: int = 7):
+        """
+        Clean up old scan history files to prevent accumulation.
+        
+        Args:
+            max_files: Maximum number of history files to keep
+            max_age_days: Maximum age of files to keep (in days)
+        """
+        try:
+            # Get all scan history files
+            history_files = list(APP_DATA_DIR.glob("scan_history_*.json"))
+            
+            if len(history_files) <= max_files:
+                return  # No cleanup needed
+            
+            # Sort by modification time (oldest first)
+            history_files.sort(key=lambda x: x.stat().st_mtime)
+            
+            # Calculate cutoff time
+            cutoff_time = time.time() - (max_age_days * 24 * 60 * 60)
+            
+            # Remove old files
+            removed_count = 0
+            for file_path in history_files[:-max_files]:  # Keep the newest max_files
+                try:
+                    # Also check age
+                    if file_path.stat().st_mtime < cutoff_time:
+                        file_path.unlink()
+                        removed_count += 1
+                        self.logger.info(f"Removed old history file: {file_path.name}")
+                except Exception as e:
+                    self.logger.warning(f"Failed to remove old history file {file_path.name}: {e}")
+            
+            if removed_count > 0:
+                self.logger.info(f"Cleaned up {removed_count} old history files")
+                
+        except Exception as e:
+            self.logger.error(f"Error during history cleanup: {str(e)}")
+    
+    def archive_current_history(self) -> bool:
+        """
+        Archive the current history file with timestamp and create a new empty one.
+        
+        Returns:
+            True if successful, False otherwise
+        """
+        try:
+            current_file = APP_DATA_DIR / "scan_history_current.json"
+            
+            if not current_file.exists():
+                return True  # Nothing to archive
+            
+            # Create archive filename with timestamp
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            archive_filename = f"scan_history_archive_{timestamp}.json"
+            archive_path = APP_DATA_DIR / archive_filename
+            
+            # Move current file to archive
+            current_file.rename(archive_path)
+            
+            self.logger.info(f"Archived history to {archive_filename}")
+            return True
+            
+        except Exception as e:
+            self.logger.error(f"Failed to archive history: {str(e)}")
             return False
     
     @log_function_call
@@ -62,14 +134,27 @@ class FileManager:
         Load scan history from JSON file.
         
         Args:
-            filename: Optional custom filename
+            filename: Optional custom filename (defaults to current history file)
         
         Returns:
             List of scan history items
         """
         try:
             if filename is None:
-                file_path = HISTORY_FILE
+                # Try current history file first
+                file_path = APP_DATA_DIR / "scan_history_current.json"
+                
+                # If current file doesn't exist, try to find the most recent history file
+                if not file_path.exists():
+                    history_files = list(APP_DATA_DIR.glob("scan_history_*.json"))
+                    if history_files:
+                        # Sort by modification time (newest first)
+                        history_files.sort(key=lambda x: x.stat().st_mtime, reverse=True)
+                        file_path = history_files[0]
+                        self.logger.info(f"Using most recent history file: {file_path.name}")
+                    else:
+                        self.logger.warning("No history files found")
+                        return []
             else:
                 file_path = APP_DATA_DIR / filename
             
@@ -80,7 +165,7 @@ class FileManager:
             with open(file_path, 'r', encoding='utf-8') as f:
                 history_data = json.load(f)
             
-            self.logger.info(f"Loaded {len(history_data)} scan history items")
+            self.logger.info(f"Loaded {len(history_data)} scan history items from {file_path.name}")
             return history_data
             
         except Exception as e:
@@ -286,21 +371,4 @@ class FileManager:
 file_manager = FileManager()
 
 # Convenience functions
-def save_history(history_data: List[Dict[str, Any]], 
-                filename: Optional[str] = None) -> bool:
-    """Save scan history."""
-    return file_manager.save_scan_history(history_data, filename)
-
-def load_history(filename: Optional[str] = None) -> List[Dict[str, Any]]:
-    """Load scan history."""
-    return file_manager.load_scan_history(filename)
-
-def export_csv(data: List[Dict[str, Any]], 
-               filename: Optional[str] = None) -> bool:
-    """Export data to CSV."""
-    return file_manager.export_to_csv(data, filename)
-
-def export_excel(data: List[Dict[str, Any]], 
-                 filename: Optional[str] = None) -> bool:
-    """Export data to Excel."""
-    return file_manager.export_to_excel(data, filename) 
+ 

@@ -6,15 +6,21 @@ import tkinter as tk
 from tkinter import messagebox
 import sys
 import threading
-from typing import Optional, Callable, Any
+from typing import Optional, Callable, Any, Dict
 from pathlib import Path
 
 from ..utils.logger import LoggerMixin, get_logger, setup_logger
+from ..utils.common_utils import CallbackManager, StateManager, RetryManager
 from ..config.paths import ensure_directories
+from ..config.config_manager import ConfigManager
 from ..config.settings import *
+from ..config.settings import DEFAULT_MASTER_LIST_SHEET_NAME
 from .camera_manager import CameraManager
 from .sheets_manager import GoogleSheetsManager
 from .scan_processor import ScanProcessor
+from ..services.scan_service import ScanService, ScanResult
+from ..services.sheets_service import GoogleSheetsService, SheetConfig, ScanData
+from ..services.volunteer_service import VolunteerService
 
 logger = get_logger(__name__)
 
@@ -36,20 +42,36 @@ class QRScannerApp(LoggerMixin):
         # Setup logging
         setup_logger()
         
+        # Initialize configuration manager
+        self.config_manager = ConfigManager()
+        
+        # Initialize utility managers
+        self.callback_manager = CallbackManager()
+        self.state_manager = StateManager("initialized")
+        self.retry_manager = RetryManager()
+        
         # Core components
         self.root: Optional[tk.Tk] = None
         self.camera_manager: Optional[CameraManager] = None
         self.sheets_manager: Optional[GoogleSheetsManager] = None
         self.scan_processor: Optional[ScanProcessor] = None
         
+        # Service layer components
+        self.scan_service: Optional[ScanService] = None
+        self.sheets_service: Optional[GoogleSheetsService] = None
+        self.volunteer_service: Optional[VolunteerService] = None
+        
         # Application state
         self.is_initialized = False
         self.is_running = False
-        self.auto_save_enabled = True
+        self.auto_save_enabled = False  # Disabled old auto-save mechanism
         
         # Callbacks
         self.gui_callback: Optional[Callable] = None
         self.status_callback: Optional[Callable] = None
+        
+        # Setup state transition rules
+        self._setup_state_transitions()
         
         self.log_info("QR Scanner App initialized")
     
@@ -71,12 +93,19 @@ class QRScannerApp(LoggerMixin):
             self.gui_callback = gui_callback
             self.status_callback = status_callback
             
+            # Change state to initializing
+            self.state_manager.change_state("initializing")
+            
             # Check dependencies
             if not self._check_dependencies():
+                self.state_manager.change_state("error")
                 return False
             
             # Initialize core components
             self._initialize_components()
+            
+            # Initialize service layer
+            self._initialize_services()
             
             # Setup auto-save
             if self.auto_save_enabled:
@@ -86,11 +115,13 @@ class QRScannerApp(LoggerMixin):
             self._setup_cleanup()
             
             self.is_initialized = True
+            self.state_manager.change_state("ready")
             self.log_info("Application initialized successfully")
             return True
             
         except Exception as e:
             self.log_error(f"Failed to initialize application: {str(e)}", exc_info=True)
+            self.state_manager.change_state("error")
             return False
     
     def _check_dependencies(self) -> bool:
@@ -191,6 +222,102 @@ class QRScannerApp(LoggerMixin):
                 self.root.after(0, self.gui_callback, 'credentials_status', 
                               {'status': 'error', 'message': f'Error: {str(e)}'})
     
+    def _auto_connect_to_sheets(self):
+        """Automatically connect to Google Sheets if enabled in configuration."""
+        try:
+            # Check if auto-connect is enabled
+            config = self.config_manager.get_config()
+            if not config.auto_connect_to_sheets:
+                self.log_info("Auto-connect to Google Sheets is disabled")
+                return
+            
+            # Check if credentials are available
+            if not self.check_credentials():
+                self.log_info("No credentials available for auto-connect")
+                if self.status_callback:
+                    self.status_callback("Please setup Google Sheets credentials first")
+                return
+            
+            # Get configuration
+            sheets_config = self.config_manager.get_google_sheets_config()
+            spreadsheet_id = sheets_config.spreadsheet_id
+            sheet_name = sheets_config.sheet_name
+            
+            if not spreadsheet_id or not sheet_name:
+                self.log_warning("No spreadsheet ID or sheet name configured for auto-connect")
+                if self.status_callback:
+                    self.status_callback("Please configure spreadsheet settings")
+                return
+            
+            # Attempt to connect
+            self.log_info("Attempting auto-connect to Google Sheets...")
+            if self.status_callback:
+                self.status_callback("Auto-connecting to Google Sheets...")
+            
+            try:
+                spreadsheet_title = self.connect_to_sheets(spreadsheet_id, sheet_name)
+                self.log_info(f"Auto-connected to Google Sheets: {spreadsheet_title}")
+                
+                # Auto-load master list if enabled
+                if config.auto_load_master_list:
+                    self._auto_load_master_list()
+                    
+            except Exception as e:
+                self.log_error(f"Auto-connect failed: {str(e)}")
+                if self.status_callback:
+                    self.status_callback(f"Auto-connect failed: {str(e)}")
+                if self.gui_callback:
+                    self.root.after(0, self.gui_callback, 'sheets_status', 
+                                  {'status': 'error', 'text': f'Auto-connect failed: {str(e)}'})
+                    
+        except Exception as e:
+            self.log_error(f"Error in auto-connect: {str(e)}")
+            if self.status_callback:
+                self.status_callback(f"Auto-connect error: {str(e)}")
+    
+    def _auto_load_master_list(self):
+        """Automatically load master list if enabled."""
+        try:
+            config = self.config_manager.get_config()
+            if not config.auto_load_master_list:
+                self.log_info("Auto-load master list is disabled")
+                return
+            
+            if not self.is_sheets_connected():
+                self.log_warning("Not connected to Google Sheets, cannot load master list")
+                return
+            
+            sheets_config = self.config_manager.get_google_sheets_config()
+            master_spreadsheet_id = sheets_config.master_list_spreadsheet_id
+            master_sheet_name = sheets_config.master_list_sheet_name
+            
+            if not master_spreadsheet_id or not master_sheet_name:
+                self.log_warning("No master list configuration for auto-load")
+                return
+            
+            # Update master list configuration
+            self.update_master_list_config(master_spreadsheet_id, master_sheet_name)
+            
+            # Load master list
+            self.log_info("Auto-loading master list...")
+            if self.status_callback:
+                self.status_callback("Auto-loading master list...")
+            
+            count = self.load_master_list()
+            if count > 0:
+                self.log_info(f"Auto-loaded {count} records from master list")
+                if self.status_callback:
+                    self.status_callback(f"Auto-loaded {count} records from master list")
+            else:
+                self.log_warning("No data found in master list")
+                if self.status_callback:
+                    self.status_callback("No data found in master list")
+                    
+        except Exception as e:
+            self.log_error(f"Error in auto-load master list: {str(e)}")
+            if self.status_callback:
+                self.status_callback(f"Auto-load master list error: {str(e)}")
+    
     def _handle_scan_actions(self, data: str):
         """Handle scan actions like clipboard copy and typing simulation."""
         try:
@@ -215,8 +342,44 @@ class QRScannerApp(LoggerMixin):
     
     def _setup_cleanup(self):
         """Setup cleanup procedures for application exit."""
-        if self.root:
-            self.root.protocol("WM_DELETE_WINDOW", self.shutdown)
+        # Note: Window closing is handled by MainWindow._on_closing
+        # This method is kept for potential future use
+        pass
+    
+    def _setup_state_transitions(self):
+        """Setup application state transition rules."""
+        self.state_manager.add_transition_rule("initialized", ["initializing", "error"])
+        self.state_manager.add_transition_rule("initializing", ["ready", "error"])
+        self.state_manager.add_transition_rule("ready", ["running", "error", "shutdown"])
+        self.state_manager.add_transition_rule("running", ["ready", "error", "shutdown"])
+        self.state_manager.add_transition_rule("error", ["ready", "shutdown"])
+        self.state_manager.add_transition_rule("shutdown", [])
+    
+    def _initialize_services(self):
+        """Initialize service layer components."""
+        try:
+            # Initialize sheets service with configuration
+            sheets_config = self.config_manager.get_google_sheets_config()
+            sheet_config = SheetConfig(
+                spreadsheet_id=sheets_config.spreadsheet_id,
+                sheet_name=sheets_config.sheet_name,
+                master_list_sheet=DEFAULT_MASTER_LIST_SHEET_NAME,
+                master_list_spreadsheet_id=sheets_config.master_list_spreadsheet_id,
+                master_list_sheet_name=sheets_config.master_list_sheet_name
+            )
+            self.sheets_service = GoogleSheetsService(sheet_config)
+            
+            # Initialize volunteer service with sheets manager
+            self.volunteer_service = VolunteerService(self.sheets_manager)
+            
+            # Initialize scan service with volunteer service
+            self.scan_service = ScanService(self.volunteer_service)
+            
+            self.log_info("Service layer initialized successfully")
+            
+        except Exception as e:
+            self.log_error(f"Error initializing services: {str(e)}")
+            raise
     
     def start(self) -> bool:
         """
@@ -237,39 +400,71 @@ class QRScannerApp(LoggerMixin):
             if self.status_callback:
                 self.status_callback("Application started")
             
+            # Auto-connect to Google Sheets if enabled
+            self._auto_connect_to_sheets()
+            
             return True
             
         except Exception as e:
             self.log_error(f"Failed to start application: {str(e)}", exc_info=True)
             return False
     
+    def cleanup_history(self):
+        """Clean up and archive scan history."""
+        try:
+            if self.scan_processor:
+                # Archive current history before shutdown
+                if hasattr(self.scan_processor, 'file_manager'):
+                    self.scan_processor.file_manager.archive_current_history()
+                
+                # Save final history state
+                self.scan_processor.save_all_data()
+            
+            self.log_info("History cleanup completed")
+            
+        except Exception as e:
+            self.log_error(f"Error during history cleanup: {str(e)}")
+    
     def shutdown(self):
-        """Shutdown the application gracefully."""
+        """Shutdown the application."""
         try:
             self.log_info("Shutting down application...")
             
-            # Stop camera
-            if self.camera_manager:
-                self.camera_manager.stop_camera()
-            
-            # Save final data
-            if self.scan_processor:
-                self.scan_processor.save_all_data()
-            
-            # Close Google Sheets connection
-            if self.sheets_manager:
-                self.sheets_manager.close()
-            
+            # Set running flag to False to stop any ongoing operations
             self.is_running = False
             
-            # Destroy root window
-            if self.root:
-                self.root.destroy()
+            # Stop camera if running (non-blocking)
+            if self.camera_manager:
+                try:
+                    self.camera_manager.stop_camera()
+                    self.log_info("Camera stopped")
+                except Exception as e:
+                    self.log_error(f"Error stopping camera: {e}")
+            
+            # Quick cleanup - don't block on these operations
+            try:
+                # Clean up history
+                self.cleanup_history()
+                
+                # Save scan history
+                if self.scan_processor:
+                    self.scan_processor.save_all_data()
+                    self.log_info("Scan history saved")
+                
+                # Close Google Sheets connection
+                if self.sheets_manager:
+                    self.sheets_manager.close()
+                    self.log_info("Google Sheets connection closed")
+            except Exception as e:
+                self.log_error(f"Error during cleanup: {e}")
             
             self.log_info("Application shutdown complete")
             
         except Exception as e:
-            self.log_error(f"Error during shutdown: {str(e)}", exc_info=True)
+            self.log_error(f"Error during shutdown: {str(e)}")
+        finally:
+            # Ensure we always set running to False
+            self.is_running = False
     
     def _camera_callback(self, data: str, barcode_type: str, photo=None):
         """
@@ -391,6 +586,24 @@ class QRScannerApp(LoggerMixin):
             self.log_error(f"Error setting up credentials: {str(e)}")
             return False
     
+    def check_credentials(self) -> bool:
+        """Check if Google Sheets credentials are available."""
+        try:
+            if not self.sheets_manager:
+                return False
+                
+            # Check if credentials file exists and token file exists
+            from ..config.paths import get_credentials_path, get_token_path
+            import os
+            
+            creds_path = get_credentials_path()
+            token_path = get_token_path()
+            
+            return os.path.exists(creds_path) and os.path.exists(token_path)
+        except Exception as e:
+            self.log_error(f"Error checking credentials: {str(e)}")
+            return False
+    
     def connect_to_sheets(self, spreadsheet_id: str, sheet_name: str) -> str:
         """Connect to Google Sheets."""
         try:
@@ -414,7 +627,13 @@ class QRScannerApp(LoggerMixin):
     
     def is_sheets_connected(self) -> bool:
         """Check if connected to Google Sheets."""
-        return self.sheets_manager.is_connected()
+        try:
+            if not self.sheets_manager:
+                return False
+            return self.sheets_manager.is_connected()
+        except Exception as e:
+            self.log_error(f"Error checking sheets connection: {str(e)}")
+            return False
     
     def load_master_list(self) -> int:
         """Load master list data from Google Sheets."""
@@ -425,6 +644,85 @@ class QRScannerApp(LoggerMixin):
         except Exception as e:
             self.log_error(f"Error loading master list: {str(e)}")
             return 0
+    
+    def update_master_list_config(self, spreadsheet_id: str, sheet_name: str) -> bool:
+        """
+        Update the Master List configuration.
+        
+        Args:
+            spreadsheet_id: Master List spreadsheet ID
+            sheet_name: Master List sheet name
+            
+        Returns:
+            True if successful, False otherwise
+        """
+        try:
+            if not self.sheets_manager:
+                self.log_error("Sheets manager not initialized")
+                return False
+            
+            # Update the sheets manager configuration
+            self.sheets_manager.update_master_list_config(spreadsheet_id, sheet_name)
+
+            # Update the configuration manager
+            self.config_manager.update_google_sheets_config(
+                master_list_spreadsheet_id=spreadsheet_id,
+                master_list_sheet_name=sheet_name
+            )
+
+            # Update the sheets service configuration if it exists
+            if self.sheets_service:
+                self.sheets_service.config.master_list_spreadsheet_id = spreadsheet_id
+                self.sheets_service.config.master_list_sheet_name = sheet_name
+
+            self.log_info(f"Updated Master List config: {spreadsheet_id}/{sheet_name}")
+            return True
+            
+        except Exception as e:
+            self.log_error(f"Error updating Master List config: {str(e)}")
+            return False
+    
+    def update_sheets_config(self, spreadsheet_id: str = None, sheet_name: str = None) -> bool:
+        """
+        Update the main Google Sheets configuration.
+
+        Args:
+            spreadsheet_id: Main spreadsheet ID (optional)
+            sheet_name: Main sheet name (optional)
+
+        Returns:
+            True if successful, False otherwise
+        """
+        try:
+            if not self.sheets_manager:
+                self.log_error("Sheets manager not initialized")
+                return False
+
+            # Update the configuration manager
+            config_updates = {}
+            if spreadsheet_id is not None:
+                config_updates['spreadsheet_id'] = spreadsheet_id
+            if sheet_name is not None:
+                config_updates['sheet_name'] = sheet_name
+
+            if config_updates:
+                self.config_manager.update_google_sheets_config(**config_updates)
+
+                # Update the sheets service configuration if it exists
+                if self.sheets_service:
+                    if spreadsheet_id is not None:
+                        self.sheets_service.config.spreadsheet_id = spreadsheet_id
+                    if sheet_name is not None:
+                        self.sheets_service.config.sheet_name = sheet_name
+
+                self.log_info(f"Updated Sheets config: {config_updates}")
+                return True
+
+            return False
+
+        except Exception as e:
+            self.log_error(f"Error updating Sheets config: {str(e)}")
+            return False
     
     def add_scan_data(self, data: str, barcode_type: str) -> bool:
         """Add scan data to Google Sheets."""
@@ -488,4 +786,119 @@ class QRScannerApp(LoggerMixin):
             return False
         except Exception as e:
             self.log_error(f"Error copying to clipboard: {str(e)}")
+            return False
+    
+    def process_scan(self, data: str, barcode_type: str) -> ScanResult:
+        """
+        Process a scan using the scan service.
+        
+        Args:
+            data: Raw scan data
+            barcode_type: Type of barcode
+            
+        Returns:
+            ScanResult object
+        """
+        if not self.scan_service:
+            self.log_error("Scan service not initialized")
+            return ScanResult(
+                success=False,
+                data=data,
+                barcode_type=barcode_type,
+                timestamp="",
+                formatted_name="",
+                first_name="",
+                last_name="",
+                status="Error",
+                error_message="Scan service not initialized"
+            )
+        
+        return self.scan_service.process_scan(data, barcode_type)
+    
+    def add_scan_data_via_service(self, data: str, barcode_type: str) -> bool:
+        """
+        Add scan data to Google Sheets using the sheets service.
+        
+        Args:
+            data: Scan data
+            barcode_type: Type of barcode
+            
+        Returns:
+            True if successful, False otherwise
+        """
+        if not self.sheets_service:
+            self.log_error("Sheets service not initialized")
+            return False
+        
+        # Process scan to get formatted data
+        scan_result = self.process_scan(data, barcode_type)
+        
+        # Create scan data for sheets service
+        scan_data = ScanData(
+            data=scan_result.data,
+            barcode_type=scan_result.barcode_type,
+            formatted_name=scan_result.formatted_name,
+            first_name=scan_result.first_name,
+            last_name=scan_result.last_name,
+            status=scan_result.status
+        )
+        
+        # Use retry manager for sheets operation
+        return self.retry_manager.execute_with_retry(
+            self.sheets_service.add_scan_data,
+            scan_data,
+            retry_exceptions=(Exception,),
+            error_message="Failed to add scan data to sheets"
+        )
+    
+    def lookup_volunteer_via_service(self, volunteer_id: str) -> Optional[Dict[str, str]]:
+        """
+        Look up volunteer information using the volunteer service.
+        
+        Args:
+            volunteer_id: Volunteer ID to lookup
+            
+        Returns:
+            Volunteer information or None if not found
+        """
+        if not self.volunteer_service:
+            self.log_error("Volunteer service not initialized")
+            return None
+        
+        return self.volunteer_service.lookup_volunteer(volunteer_id)
+    
+    def get_config(self):
+        """Get application configuration."""
+        return self.config_manager.get_config()
+    
+    def update_config(self, section: str, **kwargs) -> bool:
+        """
+        Update application configuration.
+        
+        Args:
+            section: Configuration section to update
+            **kwargs: Configuration parameters
+            
+        Returns:
+            True if successful, False otherwise
+        """
+        try:
+            if section == 'google_sheets':
+                return self.config_manager.update_google_sheets_config(**kwargs)
+            elif section == 'camera':
+                return self.config_manager.update_camera_config(**kwargs)
+            elif section == 'window':
+                return self.config_manager.update_window_config(**kwargs)
+            elif section == 'performance':
+                return self.config_manager.update_performance_config(**kwargs)
+            elif section == 'logging':
+                return self.config_manager.update_logging_config(**kwargs)
+            elif section == 'preferences':
+                return self.config_manager.update_user_preferences(**kwargs)
+            else:
+                self.log_warning(f"Unknown configuration section: {section}")
+                return False
+                
+        except Exception as e:
+            self.log_error(f"Error updating configuration: {str(e)}")
             return False 

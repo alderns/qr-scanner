@@ -51,3 +51,273 @@ Traceback (most recent call last):
     ^^^^^^^^^^^^^^^^^
 AttributeError: 'MainWindow' object has no attribute 'status_label'. Did you mean: 'status_bar'?
 2025-07-25 11:02:00,253 - src.utils.file_utils - ERROR - log_error:105 - Error connecting to spreadsheet: 'GoogleSheetsManager' object has no attribute 'connect_to_sheets'
+2025-07-25 11:18:38,338 - src.utils.file_utils - ERROR - main:61 - Unexpected error: 'sm'
+Traceback (most recent call last):
+  File "C:\Users\aldri\Downloads\qr\main.py", line 32, in main
+    main_window = MainWindow(root, app_manager)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\aldri\Downloads\qr\src\gui\main_window.py", line 64, in __init__
+    self.setup_gui()
+  File "C:\Users\aldri\Downloads\qr\src\gui\main_window.py", line 142, in setup_gui
+    self._create_main_content(self.main_container)
+  File "C:\Users\aldri\Downloads\qr\src\gui\main_window.py", line 303, in _create_main_content
+    self._create_logs_tab(logs_frame)
+  File "C:\Users\aldri\Downloads\qr\src\gui\main_window.py", line 549, in _create_logs_tab
+    self.logs_tab = LogsTab(parent, self.app_manager, callbacks)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\aldri\Downloads\qr\src\gui\tabs\logs_tab.py", line 22, in __init__
+    self._create_logs_interface()
+  File "C:\Users\aldri\Downloads\qr\src\gui\tabs\logs_tab.py", line 68, in _create_logs_interface
+    self.filter_entry.pack(side=tk.LEFT, padx=(COMPONENT_SPACING['form_field_margin'], COMPONENT_SPACING['sm']))
+                                                                                       ~~~~~~~~~~~~~~~~~^^^^^^
+KeyError: 'sm'
+2025-07-25 11:19:24,669 - src.utils.file_utils - ERROR - main:61 - Unexpected error: 'sm'
+Traceback (most recent call last):
+  File "C:\Users\aldri\Downloads\qr\main.py", line 32, in main
+    main_window = MainWindow(root, app_manager)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\aldri\Downloads\qr\src\gui\main_window.py", line 64, in __init__
+    self.setup_gui()
+  File "C:\Users\aldri\Downloads\qr\src\gui\main_window.py", line 142, in setup_gui
+    self._create_main_content(self.main_container)
+  File "C:\Users\aldri\Downloads\qr\src\gui\main_window.py", line 303, in _create_main_content
+    self._create_logs_tab(logs_frame)
+  File "C:\Users\aldri\Downloads\qr\src\gui\main_window.py", line 549, in _create_logs_tab
+    self.logs_tab = LogsTab(parent, self.app_manager, callbacks)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\aldri\Downloads\qr\src\gui\tabs\logs_tab.py", line 22, in __init__
+    self._create_logs_interface()
+  File "C:\Users\aldri\Downloads\qr\src\gui\tabs\logs_tab.py", line 68, in _create_logs_interface
+    self.filter_entry.pack(side=tk.LEFT, padx=(COMPONENT_SPACING['form_field_margin'], COMPONENT_SPACING['sm']))
+                                                                                       ~~~~~~~~~~~~~~~~~^^^^^^
+KeyError: 'sm'
+2025-07-25 11:21:28,321 - src.utils.file_utils - ERROR - main:61 - Unexpected error: 'sm'
+Traceback (most recent call last):
+  File "C:\Users\aldri\Downloads\qr\main.py", line 32, in main
+    main_window = MainWindow(root, app_manager)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\aldri\Downloads\qr\src\gui\main_window.py", line 64, in __init__
+    self.setup_gui()
+  File "C:\Users\aldri\Downloads\qr\src\gui\main_window.py", line 142, in setup_gui
+    self._create_main_content(self.main_container)
+  File "C:\Users\aldri\Downloads\qr\src\gui\main_window.py", line 303, in _create_main_content
+    self._create_logs_tab(logs_frame)
+  File "C:\Users\aldri\Downloads\qr\src\gui\main_window.py", line 549, in _create_logs_tab
+    self.logs_tab = LogsTab(parent, self.app_manager, callbacks)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\aldri\Downloads\qr\src\gui\tabs\logs_tab.py", line 22, in __init__
+    self._create_logs_interface()
+  File "C:\Users\aldri\Downloads\qr\src\gui\tabs\logs_tab.py", line 68, in _create_logs_interface
+    self.filter_entry.pack(side=tk.LEFT, padx=(COMPONENT_SPACING['form_field_margin'], COMPONENT_SPACING['sm']))
+                                                                                       ~~~~~~~~~~~~~~~~~^^^^^^
+KeyError: 'sm'
+2025-07-25 11:26:17,193 - src.utils.file_utils - ERROR - main:61 - Unexpected error: 'sm'
+Traceback (most recent call last):
+  File "C:\Users\aldri\Downloads\qr\main.py", line 32, in main
+    main_window = MainWindow(root, app_manager)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\aldri\Downloads\qr\src\gui\main_window.py", line 64, in __init__
+    self.setup_gui()
+  File "C:\Users\aldri\Downloads\qr\src\gui\main_window.py", line 142, in setup_gui
+    self._create_main_content(self.main_container)
+  File "C:\Users\aldri\Downloads\qr\src\gui\main_window.py", line 303, in _create_main_content
+    self._create_logs_tab(logs_frame)
+  File "C:\Users\aldri\Downloads\qr\src\gui\main_window.py", line 549, in _create_logs_tab
+    self.logs_tab = LogsTab(parent, self.app_manager, callbacks)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\aldri\Downloads\qr\src\gui\tabs\logs_tab.py", line 22, in __init__
+    self._create_logs_interface()
+  File "C:\Users\aldri\Downloads\qr\src\gui\tabs\logs_tab.py", line 68, in _create_logs_interface
+    self.filter_entry.pack(side=tk.LEFT, padx=(COMPONENT_SPACING['form_field_margin'], COMPONENT_SPACING['sm']))
+                                                                                       ~~~~~~~~~~~~~~~~~^^^^^^
+KeyError: 'sm'
+2025-07-25 12:27:52,786 - src.utils.file_utils - ERROR - main:61 - Unexpected error: 'QRScannerApp' object has no attribute 'check_credentials'
+Traceback (most recent call last):
+  File "C:\Users\aldri\Downloads\qr\main.py", line 32, in main
+    main_window = MainWindow(root, app_manager)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\aldri\Downloads\qr\src\gui\main_window.py", line 36, in __init__
+    self.setup_gui()
+  File "C:\Users\aldri\Downloads\qr\src\gui\main_window.py", line 85, in setup_gui
+    self._create_main_content(self.main_container)
+  File "C:\Users\aldri\Downloads\qr\src\gui\main_window.py", line 127, in _create_main_content
+    self._create_settings_tab(settings_frame)
+  File "C:\Users\aldri\Downloads\qr\src\gui\main_window.py", line 184, in _create_settings_tab
+    self.settings_tab = SettingsTab(parent, self.app_manager, callbacks)
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\aldri\Downloads\qr\src\gui\tabs\settings_tab.py", line 23, in __init__
+    self._check_initial_status()
+  File "C:\Users\aldri\Downloads\qr\src\gui\tabs\settings_tab.py", line 129, in _check_initial_status
+    if self.app_manager.check_credentials():
+       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'QRScannerApp' object has no attribute 'check_credentials'. Did you mean: 'setup_credentials'?
+2025-07-25 12:29:15,233 - src.utils.file_utils - ERROR - main:61 - Unexpected error: 'NoneType' object has no attribute 'is_connected'
+Traceback (most recent call last):
+  File "C:\Users\aldri\Downloads\qr\main.py", line 32, in main
+    main_window = MainWindow(root, app_manager)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\aldri\Downloads\qr\src\gui\main_window.py", line 36, in __init__
+    self.setup_gui()
+  File "C:\Users\aldri\Downloads\qr\src\gui\main_window.py", line 85, in setup_gui
+    self._create_main_content(self.main_container)
+  File "C:\Users\aldri\Downloads\qr\src\gui\main_window.py", line 127, in _create_main_content
+    self._create_settings_tab(settings_frame)
+  File "C:\Users\aldri\Downloads\qr\src\gui\main_window.py", line 184, in _create_settings_tab
+    self.settings_tab = SettingsTab(parent, self.app_manager, callbacks)
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\aldri\Downloads\qr\src\gui\tabs\settings_tab.py", line 23, in __init__
+    self._check_initial_status()
+  File "C:\Users\aldri\Downloads\qr\src\gui\tabs\settings_tab.py", line 138, in _check_initial_status
+    if self.app_manager.is_sheets_connected():
+       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\aldri\Downloads\qr\src\core\app_manager.py", line 434, in is_sheets_connected
+    return self.sheets_manager.is_connected()
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'NoneType' object has no attribute 'is_connected'
+2025-07-25 13:30:23,599 - src.utils.file_utils - ERROR - main:61 - Unexpected error: unknown option "-bg"
+Traceback (most recent call last):
+  File "C:\Users\aldri\Downloads\qr\main.py", line 32, in main
+    main_window = MainWindow(root, app_manager)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\aldri\Downloads\qr\src\gui\main_window.py", line 37, in __init__
+    self.setup_gui()
+  File "C:\Users\aldri\Downloads\qr\src\gui\main_window.py", line 86, in setup_gui
+    self._create_main_content(self.main_container)
+  File "C:\Users\aldri\Downloads\qr\src\gui\main_window.py", line 133, in _create_main_content
+    self._create_history_tab(history_frame)
+  File "C:\Users\aldri\Downloads\qr\src\gui\main_window.py", line 193, in _create_history_tab
+    self.history_tab = HistoryTab(parent, self.app_manager, callbacks)
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\aldri\Downloads\qr\src\gui\tabs\history_tab.py", line 24, in __init__
+    self._create_history_interface()
+  File "C:\Users\aldri\Downloads\qr\src\gui\tabs\history_tab.py", line 61, in _create_history_interface
+    self.history_tree = ttk.Treeview(tree_frame, bg=THEME_COLORS['background'], columns=columns, show='headings', height=15)
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Program Files\WindowsApps\PythonSoftwareFoundation.Python.3.12_3.12.2800.0_x64__qbz5n2kfra8p0\Lib\tkinter\ttk.py", line 1180, in __init__
+    Widget.__init__(self, master, "ttk::treeview", kw)
+  File "C:\Program Files\WindowsApps\PythonSoftwareFoundation.Python.3.12_3.12.2800.0_x64__qbz5n2kfra8p0\Lib\tkinter\ttk.py", line 527, in __init__
+    tkinter.Widget.__init__(self, master, widgetname, kw=kw)
+  File "C:\Program Files\WindowsApps\PythonSoftwareFoundation.Python.3.12_3.12.2800.0_x64__qbz5n2kfra8p0\Lib\tkinter\__init__.py", line 2661, in __init__
+    self.tk.call(
+_tkinter.TclError: unknown option "-bg"
+2025-07-25 14:54:24,033 - src.utils.file_utils - ERROR - log_error:105 - Error initializing services: VolunteerService.__init__() missing 1 required positional argument: 'sheets_manager'
+2025-07-25 14:54:24,033 - src.utils.file_utils - ERROR - log_error:105 - Failed to initialize application: VolunteerService.__init__() missing 1 required positional argument: 'sheets_manager'
+Traceback (most recent call last):
+  File "C:\Users\aldri\Downloads\qr\src\core\app_manager.py", line 107, in initialize
+    self._initialize_services()
+  File "C:\Users\aldri\Downloads\qr\src\core\app_manager.py", line 264, in _initialize_services
+    self.volunteer_service = VolunteerService()
+                             ^^^^^^^^^^^^^^^^^^
+TypeError: VolunteerService.__init__() missing 1 required positional argument: 'sheets_manager'
+2025-07-25 14:54:24,036 - src.utils.file_utils - ERROR - main:39 - Failed to initialize application
+2025-07-25 18:13:23,593 - src.utils.file_utils - ERROR - main:61 - Unexpected error: name 'current_config' is not defined
+Traceback (most recent call last):
+  File "C:\Users\aldri\Downloads\qr\main.py", line 32, in main
+    main_window = MainWindow(root, app_manager)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\aldri\Downloads\qr\src\gui\main_window.py", line 36, in __init__
+    self.setup_gui()
+  File "C:\Users\aldri\Downloads\qr\src\gui\main_window.py", line 93, in setup_gui
+    self._create_main_content(self.main_container)
+  File "C:\Users\aldri\Downloads\qr\src\gui\main_window.py", line 134, in _create_main_content
+    self._create_settings_tab(settings_frame)
+  File "C:\Users\aldri\Downloads\qr\src\gui\main_window.py", line 186, in _create_settings_tab
+    self.settings_tab = SettingsTab(parent, self.app_manager, callbacks)
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\aldri\Downloads\qr\src\gui\tabs\settings_tab.py", line 22, in __init__
+    self._create_settings_interface()
+  File "C:\Users\aldri\Downloads\qr\src\gui\tabs\settings_tab.py", line 75, in _create_settings_interface
+    self._create_master_list_section(main_frame)
+  File "C:\Users\aldri\Downloads\qr\src\gui\tabs\settings_tab.py", line 183, in _create_master_list_section
+    current_master_spreadsheet_id = current_config.master_list_spreadsheet_id if current_config else DEFAULT_MASTER_LIST_SPREADSHEET_ID
+                                                                                 ^^^^^^^^^^^^^^
+NameError: name 'current_config' is not defined
+2025-07-25 18:13:39,927 - src.utils.file_utils - ERROR - main:61 - Unexpected error: name 'current_config' is not defined
+Traceback (most recent call last):
+  File "C:\Users\aldri\Downloads\qr\main.py", line 32, in main
+    main_window = MainWindow(root, app_manager)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\aldri\Downloads\qr\src\gui\main_window.py", line 36, in __init__
+    self.setup_gui()
+  File "C:\Users\aldri\Downloads\qr\src\gui\main_window.py", line 93, in setup_gui
+    self._create_main_content(self.main_container)
+  File "C:\Users\aldri\Downloads\qr\src\gui\main_window.py", line 134, in _create_main_content
+    self._create_settings_tab(settings_frame)
+  File "C:\Users\aldri\Downloads\qr\src\gui\main_window.py", line 186, in _create_settings_tab
+    self.settings_tab = SettingsTab(parent, self.app_manager, callbacks)
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\aldri\Downloads\qr\src\gui\tabs\settings_tab.py", line 22, in __init__
+    self._create_settings_interface()
+  File "C:\Users\aldri\Downloads\qr\src\gui\tabs\settings_tab.py", line 75, in _create_settings_interface
+    self._create_master_list_section(main_frame)
+  File "C:\Users\aldri\Downloads\qr\src\gui\tabs\settings_tab.py", line 183, in _create_master_list_section
+    current_master_spreadsheet_id = current_config.master_list_spreadsheet_id if current_config else DEFAULT_MASTER_LIST_SPREADSHEET_ID
+                                                                                 ^^^^^^^^^^^^^^
+NameError: name 'current_config' is not defined
+2025-07-25 18:21:01,456 - src.utils.file_utils - ERROR - main:61 - Unexpected error: 'dict' object has no attribute 'level'
+Traceback (most recent call last):
+  File "C:\Users\aldri\Downloads\qr\main.py", line 32, in main
+    main_window = MainWindow(root, app_manager)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\aldri\Downloads\qr\src\gui\main_window.py", line 36, in __init__
+    self.setup_gui()
+  File "C:\Users\aldri\Downloads\qr\src\gui\main_window.py", line 93, in setup_gui
+    self._create_main_content(self.main_container)
+  File "C:\Users\aldri\Downloads\qr\src\gui\main_window.py", line 134, in _create_main_content
+    self._create_settings_tab(settings_frame)
+  File "C:\Users\aldri\Downloads\qr\src\gui\main_window.py", line 186, in _create_settings_tab
+    self.settings_tab = SettingsTab(parent, self.app_manager, callbacks)
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\aldri\Downloads\qr\src\gui\tabs\settings_tab.py", line 22, in __init__
+    self._create_settings_interface()
+  File "C:\Users\aldri\Downloads\qr\src\gui\tabs\settings_tab.py", line 78, in _create_settings_interface
+    self._create_logging_section(main_frame)
+  File "C:\Users\aldri\Downloads\qr\src\gui\tabs\settings_tab.py", line 705, in _create_logging_section
+    current_log_level = current_config.logging.level if current_config and current_config.logging else "INFO"
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'dict' object has no attribute 'level'
+2025-07-25 18:21:15,295 - src.utils.file_utils - ERROR - main:61 - Unexpected error: 'dict' object has no attribute 'level'
+Traceback (most recent call last):
+  File "C:\Users\aldri\Downloads\qr\main.py", line 32, in main
+    main_window = MainWindow(root, app_manager)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\aldri\Downloads\qr\src\gui\main_window.py", line 36, in __init__
+    self.setup_gui()
+  File "C:\Users\aldri\Downloads\qr\src\gui\main_window.py", line 93, in setup_gui
+    self._create_main_content(self.main_container)
+  File "C:\Users\aldri\Downloads\qr\src\gui\main_window.py", line 134, in _create_main_content
+    self._create_settings_tab(settings_frame)
+  File "C:\Users\aldri\Downloads\qr\src\gui\main_window.py", line 186, in _create_settings_tab
+    self.settings_tab = SettingsTab(parent, self.app_manager, callbacks)
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\aldri\Downloads\qr\src\gui\tabs\settings_tab.py", line 22, in __init__
+    self._create_settings_interface()
+  File "C:\Users\aldri\Downloads\qr\src\gui\tabs\settings_tab.py", line 78, in _create_settings_interface
+    self._create_logging_section(main_frame)
+  File "C:\Users\aldri\Downloads\qr\src\gui\tabs\settings_tab.py", line 705, in _create_logging_section
+    current_log_level = current_config.logging.level if current_config and current_config.logging else "INFO"
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'dict' object has no attribute 'level'
+2025-07-25 19:19:58,989 - src.utils.file_utils - ERROR - main:61 - Unexpected error: MainWindow._create_main_content() missing 1 required positional argument: 'parent'
+Traceback (most recent call last):
+  File "C:\Users\aldri\Downloads\qr\main.py", line 32, in main
+    main_window = MainWindow(root, app_manager)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\aldri\Downloads\qr\src\gui\main_window.py", line 37, in __init__
+    self.setup_gui()
+  File "C:\Users\aldri\Downloads\qr\src\gui\main_window.py", line 84, in setup_gui
+    self._create_main_content()
+TypeError: MainWindow._create_main_content() missing 1 required positional argument: 'parent'
+2025-07-25 19:20:26,157 - src.utils.file_utils - ERROR - main:61 - Unexpected error: MainWindow._create_main_content() missing 1 required positional argument: 'parent'
+Traceback (most recent call last):
+  File "C:\Users\aldri\Downloads\qr\main.py", line 32, in main
+    main_window = MainWindow(root, app_manager)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\aldri\Downloads\qr\src\gui\main_window.py", line 37, in __init__
+    self.setup_gui()
+  File "C:\Users\aldri\Downloads\qr\src\gui\main_window.py", line 84, in setup_gui
+    self._create_main_content()
+TypeError: MainWindow._create_main_content() missing 1 required positional argument: 'parent'
+2025-07-25 20:59:17,313 - src.utils.file_utils - ERROR - log_error:105 - Error processing scan: 'ScanProcessor' object has no attribute 'auto_save_enabled'
+2025-07-25 20:59:30,503 - src.utils.file_utils - ERROR - log_error:105 - Error processing scan: 'ScanProcessor' object has no attribute 'auto_save_enabled'
+2025-07-25 21:04:20,015 - src.utils.file_utils - ERROR - log_error:105 - Error processing scan: 'ScanProcessor' object has no attribute 'auto_save_enabled'

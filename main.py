@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import sys
+import signal
 from pathlib import Path
 import tkinter as tk
 from tkinter import messagebox
@@ -21,9 +22,33 @@ except ImportError:
     start_performance_monitoring = lambda: None
     stop_performance_monitoring = lambda: None
 
+# Global variables for cleanup
+app_manager = None
+root = None
+
+def signal_handler(signum, frame):
+    """Handle system signals for graceful shutdown."""
+    print(f"\nReceived signal {signum}, shutting down immediately...")
+    try:
+        if app_manager:
+            app_manager.shutdown()
+        if root:
+            root.quit()
+    except Exception as e:
+        print(f"Error in signal handler: {e}")
+    finally:
+        import os
+        os._exit(0)
+
 def main():
+    global app_manager, root
+    
     logger = setup_logger("QRScanner")
     logger.info("Starting QR Scanner application")
+    
+    # Setup signal handlers
+    signal.signal(signal.SIGINT, signal_handler)
+    signal.signal(signal.SIGTERM, signal_handler)
     
     try:
         ensure_directories()
@@ -53,7 +78,20 @@ def main():
             start_performance_monitoring()
             logger.info("Performance monitoring started")
         
-        root.mainloop()
+        try:
+            root.mainloop()
+        except KeyboardInterrupt:
+            logger.info("Keyboard interrupt received")
+            if app_manager:
+                app_manager.shutdown()
+            if root:
+                root.quit()
+        except Exception as e:
+            logger.error(f"Error in main loop: {e}")
+            if app_manager:
+                app_manager.shutdown()
+            if root:
+                root.quit()
         
     except KeyboardInterrupt:
         logger.info("Application interrupted by user")
@@ -65,6 +103,8 @@ def main():
         if PERFORMANCE_MONITORING_AVAILABLE:
             stop_performance_monitoring()
             logger.info("Performance monitoring stopped")
+        if app_manager:
+            app_manager.shutdown()
         logger.info("Application shutdown complete")
 
 if __name__ == "__main__":
