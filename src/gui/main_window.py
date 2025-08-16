@@ -161,25 +161,26 @@ class MainWindow:
                                    highlightcolor=THEME_COLORS['border'])
         self.video_frame.pack(fill=tk.BOTH, expand=True, padx=20, pady=(20, 20))
         
-        # Essential controls only
-        controls_frame = tk.Frame(main_frame, bg=THEME_COLORS['background'])
-        controls_frame.pack(fill=tk.X, padx=20, pady=(0, 20))
+        # Bottom controls frame - start button and history textbox side by side
+        bottom_frame = tk.Frame(main_frame, bg=THEME_COLORS['background'])
+        bottom_frame.pack(fill=tk.X, padx=20, pady=(0, 20))
         
-        # Primary action button
-        self.start_button = ModernButton(controls_frame, text="Start Camera", 
+        # Configure grid weights for side-by-side layout
+        bottom_frame.grid_columnconfigure(1, weight=1)  # History textbox gets more space
+        
+        # Primary action button (left side)
+        self.start_button = ModernButton(bottom_frame, text="Start Camera", 
                                         style='primary',
                                         command=self._toggle_camera)
-        self.start_button.pack(side=tk.LEFT, padx=(0, 10))
+        self.start_button.grid(row=0, column=0, padx=(0, 10), sticky='w')
         
-        # Secondary actions removed - copy button deleted
-        
-        # Last scan display (simplified)
-        self.last_scan_text = tk.Text(main_frame, height=3, wrap=tk.WORD,
+        # Last scan display (right side, takes remaining space)
+        self.last_scan_text = tk.Text(bottom_frame, height=1, wrap=tk.WORD,
                                      font=NORMAL_FONT, bg=THEME_COLORS['surface'],
                                      fg=THEME_COLORS['text'], relief='solid', borderwidth=1,
                                      highlightbackground=THEME_COLORS['border'],
                                      highlightcolor=THEME_COLORS['border'])
-        self.last_scan_text.pack(fill=tk.X, padx=20, pady=(0, 20))
+        self.last_scan_text.grid(row=0, column=1, sticky='ew')
     
     def _create_settings_tab(self, parent):
         """Create a simplified settings tab with essential configuration."""
